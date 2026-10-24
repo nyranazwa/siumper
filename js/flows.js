@@ -1,6 +1,6 @@
 // Alur percakapan bot: /start, /cek, /reservasi, /kode, /lacak.
 // ---------- FLOWS ----------
-const MENU=()=>bot('Selamat datang di layanan SiUMPER!\nGunakan:\n\n'+B('/Cek')+' untuk melihat ketersediaan ruangan dan barang,\n'+B('/Reservasi')+' untuk peminjaman ruangan dan barang\n'+B('/Kode')+' untuk melihat data barang ruangan\n'+B('/Lacak')+' untuk melacak lokasi barang lewat foto stiker DBR');
+const MENU=()=>bot('Selamat datang di layanan SiUMPER!\nGunakan:\n\n'+B('/Cek')+' untuk melihat ketersediaan ruangan dan barang,\n'+B('/Reservasi')+' untuk peminjaman ruangan dan barang\n'+B('/Lacak')+' untuk melacak lokasi barang lewat foto stiker DBR');
 function start(){S={st:'idle'};setState('idle');MENU()}
 function cek(){S.pre=null;S.preR=null;setState('idle');bot(B('Informasi ruangan dan barang')+'\n\n'+B('/Ruangan')+' - Untuk cek kesediaan ruangan\n'+B('/Barang')+' - Untuk cek kesediaan barang',[['/Ruangan',ruangan],['/Barang',barang]])}
 function ruangan(){S.pre=null;S.preR=null;S.flow='cek';bot('Silahkan pilih gedung yang kamu mau cek.',BUILDINGS.map(b=>[b,()=>{S.bld=b;askRoom()}]))}
@@ -57,9 +57,9 @@ function confirmRes(x){S.res=x;setState('confirm','Tekan Kirim atau Edit');
  bot('🔍 '+B('Data Reservasi')+'\n\n'+lines+'\nTanggal: '+x.date.txt+'\nWaktu: '+x.time+'\nNama: '+x.name+'\nOrganisasi: '+x.org+'\n\nData sudah benar?',[['✅ Kirim',verify],['✏️ Edit',()=>openForm('res',x)]])}
 async function verify(){const x=S.res;S.pre=null;S.preR=null;
  const ok=S.kind==='room'?dys(x.date).every(i=>roomWin(x.room,i)):freeR(x.item,x.date)>=x.qty;
- if(!ok){setState('idle');return bot('🔍 '+B('Memverifikasi data...')+'\n\n✅ Data pemohon lengkap\n✅ No SIK ditemukan\n❌ '+(S.kind==='room'?'Ruangan':'Barang')+' tidak tersedia pada tanggal tersebut\n\nSilakan cek ketersediaan lain dengan /cek.',[['/Cek',cek]])}
+ if(!ok){setState('idle');return bot('🔍 '+B('Memverifikasi data...')+'\n\n✅ Data pemohon lengkap\n❌ '+(S.kind==='room'?'Ruangan':'Barang')+' tidak tersedia pada tanggal tersebut\n\nSilakan cek ketersediaan lain dengan /cek.',[['/Cek',cek]])}
  setState('spj','Unggah SPJ dan SIK pada kartu unggah, atau lewat tombol 📎');
- bot('🔍 '+B('Memverifikasi data...')+'\n\n✅ Data pemohon lengkap\n✅ No SIK ditemukan\n✅ '+(S.kind==='room'?'Ruangan':'Barang')+' tersedia\n\nSilakan unggah berkas berikut untuk proses verifikasi:\n📄 SPJ\n📄 SIK').then(uploadCard)}
+ bot('🔍 '+B('Memverifikasi data...')+'\n\n✅ Data pemohon lengkap\n✅ '+(S.kind==='room'?'Ruangan':'Barang')+' tersedia\n\nSilakan unggah berkas berikut untuk proses verifikasi:\n📄 SPJ\n📄 SIK').then(uploadCard)}
 function uploadCard(){
  const mk=(k,l)=>'<div class="up" data-k="'+k+'"><div class="ul">📄 '+l+'<span class="req">wajib</span></div><label class="pick"><input type="file" accept=".pdf,.doc,.docx,image/*" hidden><span class="pn">Pilih file…</span></label></div>';
  const el=add('bot form','<div class="sh-info">📎 <b>Unggah berkas</b><br>Unggah SPJ dan SIK untuk proses verifikasi.</div>'+mk('spj','SPJ')+mk('sik','SIK')+'<div class="sh-foot"><button class="go" disabled>Kirim berkas</button></div>');
@@ -70,13 +70,12 @@ function uploadCard(){
   el.querySelectorAll('input,button').forEach(x=>x.disabled=true);me('📄 SPJ: '+a.name+'\n📄 SIK: '+b.name);S.upCard=null;doSPJ(a.name,b.name)};
  S.upCard={add(f){const k=!ins.spj.files[0]?'spj':!ins.sik.files[0]?'sik':null;if(!k)return null;const dt=new DataTransfer();dt.items.add(f);ins[k].files=dt.files;ins[k].dispatchEvent(new Event('change'));return k}}}
 async function doSPJ(spjName,sikName){setState('wait','');
- await bot('📄 '+B('Verifikasi berkas')+'\n\nBerkas diterima:\n📄 SPJ: '+esc(spjName)+'\n📄 SIK: '+esc(sikName)+'\n\nMemeriksa:\n✅ Identitas pemohon\n✅ No SIK sesuai dokumen SIK\n✅ Kesesuaian kegiatan\n✅ Kelengkapan dokumen SPJ dan SIK\n\nSedang diproses.. menunggu persetujuan Admin');
+ await bot('📄 '+B('Verifikasi berkas')+'\n\nBerkas diterima:\n📄 SPJ: '+esc(spjName)+'\n📄 SIK: '+esc(sikName)+'\n\nMemeriksa:\n✅ Identitas pemohon\n✅ Kesesuaian kegiatan\n✅ Kelengkapan dokumen SPJ dan SIK\n\nSedang diproses.. menunggu persetujuan Admin');
  setTimeout(()=>{add('day','Hari berikutnya');const x=S.res;
   if(S.kind==='room')dys(x.date).forEach(i=>BOOK.push({kind:'room',key:rl(x.room).toLowerCase(),date:i}));else dys(x.date).forEach(i=>BOOK.push({kind:'item',key:x.item,qty:x.qty,date:i}));
   const where=S.kind==='room'?rl(x.room):STOCK[x.item].n+' x'+x.qty+'\nAmbil di: '+HOME[x.item];
   bot('✅ '+B('SPJ dan SIK valid')+'\n\nReservasi disetujui.\nPeminjaman:\n'+where+'\nTanggal:\n'+x.date.txt+'\n\nStatus: '+B('DISETUJUI'),null,0);setState('idle')},2500)}
-// Kode & Lacak
-function kode(){setState('idle');bot('Pilih ruangan untuk melihat data barang (kode DBR):',[...new Set(ROOMS.map(rl))].map(l=>[l,()=>{const it=ITEMS.filter(i=>i.home===l);bot('📦 '+B('Barang di '+l)+'\n\n'+(it.length?it.map(i=>'• '+i.code+' – '+i.name).join('\n'):'Belum ada data barang.'))}]))}
+// Lacak
 function lacak(){setState('foto','Unggah foto stiker DBR lewat tombol 📎');bot('🔎 '+B('Pelacakan Barang')+'\n\nKirim foto stiker DBR pada barang (pastikan kode terlihat jelas). Kami akan menunjukkan lokasi yang seharusnya.\n\nTip: tekan tombol di bawah untuk mencoba dengan foto contoh.',[['📷 Pakai foto contoh',()=>{const it=ITEMS[Math.floor(Math.random()*ITEMS.length)];readCode(null,it.code)}]])}
 function sticker(code){const c=document.createElement('canvas');c.width=300;c.height=130;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,300,130);g.strokeStyle='#222';g.lineWidth=4;g.strokeRect(6,6,288,118);g.fillStyle='#111';g.font='bold 22px sans-serif';g.fillText('DBR – Daftar Barang Ruangan',18,40);g.font='bold 26px monospace';g.fillText(code,18,85);g.font='13px sans-serif';g.fillText('Barang Kampus',18,112);return c.toDataURL()}
 function readCode(img,code){me('📷 '+(img?'foto stiker':'foto contoh'));add('me','<img src="'+(img||sticker(code))+'" alt="foto stiker">');
