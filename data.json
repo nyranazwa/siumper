@@ -1,0 +1,427 @@
+{
+ "rooms": [
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 1",
+   "f": 1,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 2",
+   "f": 1,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 3",
+   "f": 1,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 4",
+   "f": 1,
+   "h": [
+    12,
+    17
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 5",
+   "f": 1,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 6",
+   "f": 1,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 7",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 8",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 9",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 10",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 11",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 12",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 13",
+   "f": 3,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 14",
+   "f": 3,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 15",
+   "f": 3,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 16",
+   "f": 3,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 17",
+   "f": 3,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 18",
+   "f": 4,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 19",
+   "f": 4,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 20",
+   "f": 4,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 21",
+   "f": 4,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung C (Dewi Sartika)",
+   "r": "Ruang 22",
+   "f": 4,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Ruang 1",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Ruang 2",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Ruang 3",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Ruang 4",
+   "f": 2,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Ruang 5",
+   "f": 3,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Ruang 6",
+   "f": 3,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Ruang 7",
+   "f": 3,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Ruang 8",
+   "f": 3,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Lab Digital Learning",
+   "f": 4,
+   "h": [
+    8,
+    16
+   ]
+  },
+  {
+   "b": "Gedung Dr. Sutomo",
+   "r": "Lab IOT",
+   "f": 4,
+   "h": [
+    9,
+    17
+   ]
+  },
+  {
+   "b": "Aula",
+   "r": "Aula",
+   "f": 1,
+   "h": [
+    8,
+    21
+   ]
+  },
+  {
+   "b": "Isola",
+   "r": "Auditorium",
+   "f": 1,
+   "h": [
+    9,
+    15
+   ]
+  }
+ ],
+ "stock": {
+  "mic wireless": {
+   "n": "Mic Wireless",
+   "total": 3,
+   "cond": "Baik"
+  },
+  "mic kabel": {
+   "n": "Mic Kabel",
+   "total": 4,
+   "cond": "Baik"
+  },
+  "proyektor": {
+   "n": "Proyektor",
+   "total": 2,
+   "cond": "Baik"
+  },
+  "layar": {
+   "n": "Layar Screen",
+   "total": 2,
+   "cond": "Baik"
+  },
+  "speaker": {
+   "n": "Speaker",
+   "total": 4,
+   "cond": "Cukup"
+  },
+  "kabel hdmi": {
+   "n": "Kabel HDMI",
+   "total": 6,
+   "cond": "Baik"
+  },
+  "kabel roll": {
+   "n": "Kabel Roll",
+   "total": 5,
+   "cond": "Baik"
+  },
+  "laptop": {
+   "n": "Laptop",
+   "total": 3,
+   "cond": "Baik"
+  },
+  "pointer": {
+   "n": "Pointer",
+   "total": 4,
+   "cond": "Baik"
+  },
+  "meja lipat": {
+   "n": "Meja Lipat",
+   "total": 10,
+   "cond": "Cukup"
+  }
+ },
+ "home": {
+  "mic wireless": "Gedung C (Dewi Sartika) - Ruang 5",
+  "proyektor": "Gedung C (Dewi Sartika) - Ruang 4",
+  "speaker": "Aula",
+  "kabel hdmi": "Gedung Dr. Sutomo - Ruang 3",
+  "mic kabel": "Gedung C (Dewi Sartika) - Ruang 5",
+  "layar": "Gedung C (Dewi Sartika) - Ruang 4",
+  "kabel roll": "Gedung Dr. Sutomo - Ruang 3",
+  "laptop": "Gedung Dr. Sutomo - Ruang 6",
+  "pointer": "Gedung C (Dewi Sartika) - Ruang 5",
+  "meja lipat": "Isola - Auditorium"
+ },
+ "items": [
+  {
+   "code": "DBR-2026-0101",
+   "name": "Mic Wireless",
+   "home": "Gedung C (Dewi Sartika) - Ruang 5"
+  },
+  {
+   "code": "DBR-2026-0102",
+   "name": "Mic Wireless",
+   "home": "Gedung C (Dewi Sartika) - Ruang 5"
+  },
+  {
+   "code": "DBR-2026-0210",
+   "name": "Proyektor Epson",
+   "home": "Gedung C (Dewi Sartika) - Ruang 4"
+  },
+  {
+   "code": "DBR-2026-0311",
+   "name": "Speaker Aktif",
+   "home": "Aula"
+  },
+  {
+   "code": "DBR-2026-0412",
+   "name": "Kabel HDMI 10m",
+   "home": "Gedung Dr. Sutomo - Ruang 3"
+  },
+  {
+   "code": "DBR-2026-0513",
+   "name": "Meja Lipat",
+   "home": "Isola - Auditorium"
+  }
+ ],
+ "bookings": [
+  {
+   "kind": "room",
+   "key": "gedung dr. sutomo - ruang 3",
+   "date": "2026-09-12"
+  },
+  {
+   "kind": "item",
+   "key": "proyektor",
+   "qty": 2,
+   "date": "2026-09-12"
+  }
+ ],
+ "demo": {
+  "items": [
+   "mic wireless"
+  ],
+  "rooms": [
+   "Aula"
+  ]
+ }
+}
