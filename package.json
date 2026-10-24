@@ -1,0 +1,6 @@
+{
+  "name": "siumper-prototype",
+  "version": "1.0.0",
+  "description": "Prototype chatbot Telegram SiUMPER (cek ketersediaan, reservasi, pelacakan barang)",
+  "scripts": { "start": "npx serve . -l 5500" }
+}
