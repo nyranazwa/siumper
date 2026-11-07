@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="css/style.css">
 <script>(function(){var t=null;try{t=localStorage.getItem("siumper-theme")}catch(e){}if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t)})()</script></head><body>
 <div id="app">
-<header><div class="av">🤖</div><div><b>SiUmper</b><small>bot • prototype</small></div><button id="theme" type="button" aria-label="Ganti mode terang/gelap"></button></header>
+<header><div class="av">🤖</div><div><b>SiUmper</b><small>bot • prototype</small></div><a id="dashlink" href="dashboard/index.html" target="_blank" title="Buka dashboard" aria-label="Buka dashboard">📊</a><button id="theme" type="button" aria-label="Ganti mode terang/gelap"></button></header>
 <div id="log"></div>
 <div class="hint" id="hint"></div>
 <div class="chips" id="chips"></div>
@@ -15,4 +15,5 @@
 <script src="js/data.js"></script>
 <script src="js/helpers.js"></script>
 <script src="js/flows.js"></script>
+<script src="js/logger.js"></script>
 <script src="js/main.js"></script></body></html>
