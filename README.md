@@ -4,7 +4,7 @@ Jalankan dari folder ini (harus lewat server, bukan klik dua kali):
 
     python3 -m http.server 8000
     # chatbot   : http://localhost:8000/index.html
-    # dashboard : http://localhost:8000/dashboard/index.html   (tombol 📊 di header chatbot)
+    # dashboard : http://localhost:8000/dashboard/index.html   (buka lewat alamat langsung; tidak ada tombol di chatbot)
 
 ## Integrasi
 - Ruangan chatbot = ruangan DBR (satu sumber). Menambah gedung/ruangan di dashboard otomatis muncul di chatbot.
