@@ -1,39 +1,26 @@
-# SiUMPER – Prototype Chatbot Telegram
+# SiUMPER – Chatbot prototype + Dashboard
 
-Simulasi chatbot Telegram untuk cek ketersediaan ruangan/barang, reservasi, dan pelacakan barang lewat stiker DBR.
-Murni HTML + CSS + JavaScript (tanpa build, tanpa dependensi).
+Jalankan dari folder ini (harus lewat server, bukan klik dua kali):
 
-## Cara menjalankan di Visual Studio Code
+    python3 -m http.server 8000
+    # chatbot   : http://localhost:8000/index.html
+    # dashboard : http://localhost:8000/dashboard/index.html   (tombol 📊 di header chatbot)
 
-**Opsi 1 – Live Server (paling mudah)**
-1. Buka folder ini di VS Code (`File > Open Folder`).
-2. Pasang ekstensi **Live Server** (`ritwickdey.LiveServer`, VS Code akan menyarankannya otomatis).
-3. Klik kanan `index.html` → **Open with Live Server**.
+## Integrasi
+- Ruangan chatbot = ruangan DBR (satu sumber). Menambah gedung/ruangan di dashboard otomatis muncul di chatbot.
+- Data dummy: `data.json` (dibuat oleh `node tools/gen-data.js`). Dibaca chatbot (`js/data.js`) dan dashboard.
+- `js/logger.js` mencatat tiap permintaan chatbot (jenis, berhasil/gagal, waktu respons), booking yang disetujui,
+  dan laporan lokasi aset ke localStorage. Dashboard membaca data itu (otomatis refresh), digabung dengan seed log 28 hari di data.json.
+- Menu "Daftar Barang Ruangan (DBR)" (Staf UMPER): Daftar Gedung -> Rincian Gedung (daftar ruangan) -> Rincian Barang (Kelola Rincian Barang DBR). Kode stiker unik per barang dipakai chatbot /lacak.
+- Menu "Lokasi Aset (DBR)" ada di sisi Tim IT.
+- Menu "Reservasi" (Staf UMPER): daftar peminjaman ruangan dan barang. Chatbot mengirim reservasi berstatus Diproses, Admin menyetujui di dashboard (atau tombol simulasi di chatbot).
+- Dashboard punya dua tampilan: Tim IT (Bruno) dan Staf UMPER (Abel), ganti lewat menu profil kanan atas.
+- Untuk database/API nyata: ganti `DATA_URL` di `js/data.js` dan `dashboard/js/dash.js`; log bisa dikirim lewat fungsi `rec()` di `js/logger.js`.
 
-**Opsi 2 – Terminal VS Code**
-- Python: `python -m http.server 5500` lalu buka http://localhost:5500
-- Node.js: `npm start` lalu buka http://localhost:5500
-
-Membuka `index.html` langsung (double-click) juga bisa.
-
-## Struktur
-```
-index.html        kerangka halaman
-css/style.css     tampilan (mendukung mode terang/gelap)
-js/data.js        data dummy + pengaturan DEMO
-js/helpers.js     helper, parsing tanggal, cek ketersediaan, form isian
-js/flows.js       alur bot (/cek, /reservasi, /kode, /lacak)
-js/main.js        input pengguna & inisialisasi
-```
-Urutan pemuatan skrip di `index.html` penting (data → helpers → flows → main).
-
-## Perintah bot
-`/start` `/cek` (`/ruangan`, `/barang`) `/reservasi` `/kode` `/lacak`
-
-## Catatan
-- **Data masih dummy** (js/data.js): gedung, ruangan per lantai, jam tersedia, stok, kode DBR.
-- **DEMO** di js/data.js: `const DEMO={items:['mic wireless'],rooms:['Aula']}` membuat Mic Wireless dan Aula selalu "tidak tersedia".
-  Kosongkan array-nya setelah database tersedia.
-- **OCR stiker DBR belum nyata**: foto diterima, lalu kode dibaca dari nama file (mis. `DBR-2026-0101.jpg`) atau diketik/dipilih.
-- Ini simulasi di browser, bukan bot Telegram sungguhan. Untuk bot asli, logika di `flows.js` dapat dipindahkan ke backend
-  (mis. Node + grammY atau Python + python-telegram-bot) dengan data dari database.
+## Revisi sesuai catatan dosen
+- Daftar Gedung menampilkan **Jumlah Ruangan** (bukan lantai); Rincian Gedung punya kolom **Lokasi Lantai**, dan form Tambah/Ubah Ruangan punya pilihan **Lokasi Lantai** (Lantai 1-8).
+- **Keterangan** barang DBR berupa pilihan: Baik, Rusak Ringan, Rusak Berat (tampil sebagai badge; beranda Staf memisahkan Rusak Ringan dan Rusak Berat).
+- Barang/ruangan yang ditambah di dashboard langsung dikenali chatbot (/lacak) tanpa reload; chatbot juga menampilkan "Kondisi" barang.
+- Persetujuan reservasi hanya lewat dashboard (tombol "Verifikasi (Setujui)" / "Tolak"). Tombol simulasi di chatbot dihapus; chatbot baru mengirim jawaban setelah Staf UMPER memverifikasi.
+- Tambah Gedung meminta **Nama Gedung, Jumlah Lantai, dan Jumlah Ruangan**; ruangan dibuat otomatis dan dibagi rata per lantai. Tambah Ruangan memilih **Lokasi Lantai** sesuai jumlah lantai gedung.
+- Stok barang = stok dasar + barang DBR: barang DBR bernama baru otomatis menjadi jenis barang di Ketersediaan Barang, form reservasi, dan chatbot (total = jumlah semua baris DBR bernama sama). Ruangan DBR sudah otomatis ke Ketersediaan Ruangan dan chatbot.
