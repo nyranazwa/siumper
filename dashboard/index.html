@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SiUMPER – Dashboard</title>
+<link rel="stylesheet" href="css/dash.css"></head><body>
+<div id="root">
+ <aside class="sb" id="sb">
+  <div class="brand"><div class="upi">UPI</div><div class="uni">UNIVERSITAS<br>PENDIDIKAN<br>INDONESIA</div></div>
+  <div class="app"><div class="lg">🤖</div><div><b>SiUmper</b><small>Sistem Informasi UMPER</small></div></div>
+  <nav class="nav" id="nav"></nav>
+  <div class="out" id="out">↪ &nbsp;Keluar</div>
+ </aside>
+ <div class="mn">
+  <div class="top">
+   <button class="burger" id="burger" aria-label="Menu">☰</button>
+   <div class="sp"></div>
+   <div class="date"><i>📅</i><span id="today"></span></div>
+   <div class="user" id="user">
+    <button type="button" id="ubtn"><div class="ava">👤</div><div><small>Selamat Datang,</small><b id="uname"></b><small id="urole"></small></div><span>⌄</span></button>
+    <div class="umenu" id="umenu"></div>
+   </div>
+  </div>
+  <main class="pg" id="pg"></main>
+ </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="../js/cloud.js"></script>
+<script src="js/dash.js"></script>
+<script src="js/dbr.js"></script>
+<script src="js/res.js"></script>
+</body></html>
