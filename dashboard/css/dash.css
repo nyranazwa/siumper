@@ -123,3 +123,9 @@ small{color:var(--mut)}
 .stat2{display:flex;align-items:center;gap:12px;margin-top:6px}
 .stat2 .big{font-size:22px;font-weight:700}
 .grn{color:#16915a}.red{color:#e5484d}
+
+/* Mobile: teks banner tidak tertutup gambar; sidebar bisa ditutup */
+.ban h1,.ban p{position:relative;z-index:1}
+.ov{display:none}.sbx{display:none}
+@media(max-width:900px){.ban svg{opacity:.25}.sb.open+.ov{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:25}.sbx{display:block;position:absolute;top:10px;right:10px;z-index:2;border:0;background:rgba(255,255,255,.18);color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer}}
+@media(max-width:640px){.ban svg{display:none}}

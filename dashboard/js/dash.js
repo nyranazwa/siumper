@@ -171,10 +171,12 @@ function render(){if(!D)return;sync();const p=cur();
  const y=window.scrollY;$('#pg').innerHTML=PAGES[ROLE][p]();window.scrollTo(0,y);sig=signature()}
 const signature=()=>BLK().length+'|'+rd(K_LOG,[]).length+'|'+rd(K_BOOK,[]).length+'|'+rd(K_REP,[]).length;
 function csv(name,rows){const t='﻿'+rows.map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name;a.click()}
-document.addEventListener('click',async e=>{const t=e.target.closest('[data-role],[data-act],#ubtn,#burger,#out');
+document.addEventListener('click',async e=>{if(!e.target.closest('#sb')&&e.target.id!=='burger')$('#sb').classList.remove('open'); // klik di luar sidebar (mis. area gelap) menutupnya
+ const t=e.target.closest('[data-role],[data-act],#ubtn,#burger,#out,#sbx');
  if(!t){$('#umenu').classList.remove('show');return}
  if(t.id==='ubtn'){$('#umenu').classList.toggle('show');return}
  if(t.id==='burger'){$('#sb').classList.toggle('open');return}
+ if(t.id==='sbx'){$('#sb').classList.remove('open');return}
  if(t.id==='out'){alert('Prototype: belum ada autentikasi.');return}
  if(t.dataset.role){ROLE=t.dataset.role;try{localStorage.setItem(K_ROLE,ROLE)}catch(x){}$('#umenu').classList.remove('show');location.hash='#/beranda';render();return}
  const a=t.dataset.act;
