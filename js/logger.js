@@ -41,5 +41,7 @@
  window.addEventListener('storage',e=>{if(e.key==='siumper-dbr')syncDbr()});
  window.addEventListener('focus',syncDbr);document.addEventListener('visibilitychange',syncDbr);
  setInterval(syncDbr,1500);
+ // data dari device lain (Firestore): segarkan booking dan DBR
+ window.addEventListener('siumper-cloud',()=>{const b=rd(K_BOOK,null);if(Array.isArray(b))BOOK=b;syncDbr()});
  ['lacak','found','openForm'].forEach(n=>wrap(n,(o,a)=>{syncDbr();return o.apply(null,a)}));
 })();
