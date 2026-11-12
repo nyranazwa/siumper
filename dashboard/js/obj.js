@@ -18,7 +18,7 @@ function oHbar(rows,o){o=o||{};const W=440,rh=34,L=o.L||130,H=rows.length*rh+8,i
   s+='<text x="'+(L-8)+'" y="'+(y+16)+'" font-size="11.5" text-anchor="end" fill="#1b2330">'+esc(r.label)+'</text><rect x="'+L+'" y="'+y+'" width="'+iw+'" height="22" fill="#eef0f4" rx="3"/>'+
   '<rect x="'+L+'" y="'+y+'" width="'+w+'" height="22" fill="'+c+'" rx="3"><title>'+esc(r.label+': '+f(r.v))+'</title></rect><text x="'+(L+iw+6)+'" y="'+(y+16)+'" font-size="11.5" font-weight="700" fill="#1b2330">'+f(r.v)+'</text>'});
  return s+'</svg>'}
-function oVbars(o){const W=o.w||440,H=o.h||250,L=48,R=14,T=14,B=30,iw=W-L-R,ih=H-T-B,n=o.labels.length,ns=o.series.length,gw=iw/n,bw=Math.min(34,gw*.74/ns),mx=o.max,Y=v=>T+ih-Math.min(v,mx)/mx*ih,f=v=>o.fmt?o.fmt(v):v;
+function oVbars(o){const W=o.w||440,H=o.h||250,L=48,R=14,T=14,B=30,iw=W-L-R,ih=H-T-B,n=o.labels.length,ns=o.series.length,gw=iw/n,bw=Math.min(W>600?64:34,gw*.74/ns),mx=o.max,Y=v=>T+ih-Math.min(v,mx)/mx*ih,f=v=>o.fmt?o.fmt(v):v;
  let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img">';
  o.ticks.forEach(t=>{s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" stroke="#e8ebf0"/><text x="'+(L-8)+'" y="'+(Y(t)+4)+'" font-size="10.5" fill="#6b7686" text-anchor="end">'+f(t)+'</text>'});
  o.labels.forEach((l,i)=>{s+='<text x="'+(L+i*gw+gw/2)+'" y="'+(H-10)+'" font-size="10.5" fill="#6b7686" text-anchor="middle">'+esc(l)+'</text>'});
@@ -91,19 +91,25 @@ function oIT(){const logs=recent(allLogs()),today=sod(new Date()),P=PERIOD,from=
  // IT-6 biaya Gemini (simulasi)
  const gw=ex.geminiBiayaMingguan||[],lim=ex.geminiBatasBulanan||250000,bulan=gw.slice(-4).reduce((a,b)=>a+b,0),gl=gw.map((_,i)=>i===gw.length-1?'Minggu ini':'M-'+(gw.length-1-i));
  const mxC=Math.ceil(Math.max(...gw,lim/4)/20000)*20000;
- return banner('Bruno','Kesehatan sistem: apakah chatbot cepat, akurat, dan tersambung ke data UMPER.')+
- '<div class="kpis">'+kpi('✔','g','Permintaan berhasil (IT-1)',Math.round(c.rate)+'%',delta(c.rate-p.rate,true,'%',' dari periode sebelumnya'))+
+ const lastTxt=txt.length?dec(txt[txt.length-1]):'-',lastImg=img.length?dec(img[img.length-1]):'-';
+ const kpis='<div class="kpis">'+kpi('✔','g','Permintaan berhasil (IT-1)',Math.round(c.rate)+'%',delta(c.rate-p.rate,true,'%',' dari periode sebelumnya'))+
   kpi('📷','b','Foto stiker terbaca (IT-3)',Math.round(pFoto)+'%',okFoto+' dari '+nFoto+' foto')+
   kpi('📝','b','Formulir tanpa koreksi (IT-4)',(ft.length?ft[ft.length-1]:0)+'%',ft.length>1?delta(ft[ft.length-1]-ft[ft.length-2],true,'%',' dari minggu lalu')+' '+SIM:SIM)+
-  '<div class="card kpi"><div class="ico '+(online?'g':'r')+'">'+(online?'🟢':'🔴')+'</div><div><div class="l">Terakhir sinkron (IT-5)</div><div class="v" style="font-size:20px">'+(last?fmtT(last):'-')+'</div><div class="d"><span class="bd '+(online?'ok':'bad')+'">'+(online?'Terhubung':'Terputus')+'</span> &nbsp;Gagal: <b class="'+(fail?'red':'grn')+'">'+fail+'</b></div></div></div></div>'+
- '<div class="g2"><div class="card"><div class="ch"><h3>Permintaan Gagal per Fitur</h3>'+periodSel()+'</div><p class="sub" style="margin:0 0 6px">Jumlah permintaan gagal dari '+num(c.n)+' permintaan ('+Math.round(c.rate)+'% berhasil).</p>'+oHbar(fr,{L:170,max:Math.max(5,...fr.map(x=>x.v))})+'</div>'+
- '<div class="card"><div class="ch"><h3>Waktu Respons: Teks vs Gambar</h3>'+periodSel()+'</div>'+leg([['Teks (target ≤ '+tT+' dtk)','#e5484d'],['Gambar (target ≤ '+tI+' dtk)','#2a6fdb']])+
-  lineChart({labels,min:0,max:8,ticks:[0,2,4,6,8],fmt:(v,x)=>dec(v,x?1:0)+' dtk',targets:[{v:tT,color:'#e5484d'},{v:tI,color:'#2a6fdb'}],series:[{name:'Teks',color:'#e5484d',vals:txt,end:dec(txt[txt.length-1])+' dtk'},{name:'Gambar',color:'#2a6fdb',vals:img,end:dec(img[img.length-1])+' dtk'}]})+
-  '<p class="sub" style="margin:4px 0 0">Memenuhi target: teks <b>'+Math.round(pT)+'%</b>, gambar <b>'+Math.round(pI)+'%</b>.</p></div></div>'+
- '<div class="g2"><div class="card"><div class="ch"><h3>Penyebab Foto Stiker Gagal Dibaca '+SIM+'</h3></div><p class="sub" style="margin:0 0 6px">Pembacaan Gemini Vision belum tersambung; penyebab "Buram/Gelap" adalah data simulasi.</p>'+oHbar(cause,{L:150,max:Math.max(3,...cause.map(x=>x.v)),color:'#f0a020'})+'</div>'+
- '<div class="card"><div class="ch"><h3>Tren Formulir Tanpa Koreksi (NLP) '+SIM+'</h3></div>'+lineChart({labels:wl,min:0,max:100,ticks:[0,25,50,75,100],fmt:v=>Math.round(v)+'%',series:[{name:'Formulir tanpa koreksi',color:'#16915a',vals:ft,area:true,end:(ft[ft.length-1]||0)+'%'}]})+'</div></div>'+
- '<div class="card"><div class="ch"><h3>Biaya Pemakaian Gemini API per Minggu '+SIM+'</h3><span class="bd '+(bulan>lim?'bad':'ok')+'">'+rp(bulan)+' dari '+rp(lim)+' ('+Math.round(bulan/lim*100)+'%)</span></div>'+
-  oVbars({labels:gl,max:mxC,ticks:[0,.25,.5,.75,1].map(x=>Math.round(mxC*x)),fmt:v=>v>=1000?Math.round(v/1000)+'rb':v,series:[{name:'Biaya mingguan',color:'#2a6fdb',vals:gw,colors:gw.map(v=>v>lim/4?'#e5484d':'#2a6fdb')}],limit:lim/4,limitLabel:'Batas ±'+rp(lim/4)+'/minggu (Rp250.000/bulan)',h:230})+'</div>'+
+  '<div class="card kpi"><div class="ico '+(online?'g':'r')+'">'+(online?'🟢':'🔴')+'</div><div><div class="l">Terakhir sinkron (IT-5)</div><div class="v" style="font-size:20px">'+(last?fmtT(last):'-')+'</div><div class="d"><span class="bd '+(online?'ok':'bad')+'">'+(online?'Terhubung':'Terputus')+'</span> &nbsp;Gagal: <b class="'+(fail?'red':'grn')+'">'+fail+'</b></div></div></div></div>';
+ const cResp='<div class="card"><div class="ch"><h3>Waktu Respons: Teks vs Gambar</h3>'+periodSel()+'</div>'+leg([['Teks (target ≤ '+tT+' dtk)','#e5484d'],['Gambar (target ≤ '+tI+' dtk)','#2a6fdb']])+
+  lineChart({labels,min:0,max:8,ticks:[0,2,4,6,8],fmt:(v,x)=>dec(v,x?1:0)+' dtk',targets:[{v:tT,color:'#e5484d'},{v:tI,color:'#2a6fdb'}],series:[{name:'Teks',color:'#e5484d',vals:txt},{name:'Gambar',color:'#2a6fdb',vals:img}]})+
+  '<p class="sub" style="margin:4px 0 0">Hari ini: teks <b>'+lastTxt+' dtk</b>, gambar <b>'+lastImg+' dtk</b>. Memenuhi target: teks <b>'+Math.round(pT)+'%</b>, gambar <b>'+Math.round(pI)+'%</b>.</p></div>';
+ const cForm='<div class="card"><div class="ch"><h3>Tren Formulir Tanpa Koreksi (NLP) '+SIM+'</h3></div><div class="leg"><span><i style="background:#16915a"></i>% formulir terisi benar tanpa koreksi pengguna</span></div>'+lineChart({labels:wl,min:0,max:100,ticks:[0,25,50,75,100],fmt:v=>Math.round(v)+'%',series:[{name:'Formulir tanpa koreksi',color:'#16915a',vals:ft,area:true,end:(ft[ft.length-1]||0)+'%'}]})+
+  '<p class="sub" style="margin:4px 0 0">Naik <b>'+((ft[ft.length-1]||0)-(ft[0]||0))+' poin</b> dalam '+ft.length+' minggu terakhir.</p></div>';
+ const cFail='<div class="card"><div class="ch"><h3>Permintaan Gagal per Fitur</h3>'+periodSel()+'</div><p class="sub" style="margin:0 0 6px">Dari '+num(c.n)+' permintaan, '+Math.round(c.rate)+'% berhasil.</p>'+oHbar(fr,{L:170,max:Math.max(5,...fr.map(x=>x.v))})+'</div>';
+ const cCause='<div class="card"><div class="ch"><h3>Penyebab Foto Stiker Gagal Dibaca '+SIM+'</h3></div><p class="sub" style="margin:0 0 6px">Gemini Vision belum tersambung; "Buram" dan "Gelap" adalah data simulasi.</p>'+oHbar(cause,{L:170,max:Math.max(3,...cause.map(x=>x.v)),color:'#f0a020'})+'</div>';
+ const cCost='<div class="card"><div class="ch"><h3>Biaya Gemini API per Minggu '+SIM+'</h3><span class="bd '+(bulan>lim?'bad':'ok')+'">'+rp(bulan)+' / '+rp(lim)+' ('+Math.round(bulan/lim*100)+'%)</span></div>'+
+  oVbars({labels:gl,max:mxC,ticks:[0,.25,.5,.75,1].map(x=>Math.round(mxC*x)),fmt:v=>v>=1000?Math.round(v/1000)+'rb':v,series:[{name:'Biaya mingguan',color:'#2a6fdb',vals:gw,colors:gw.map(v=>v>lim/4?'#e5484d':'#2a6fdb')}],limit:lim/4,limitLabel:'Batas '+rp(lim/4)+'/minggu',w:900,h:230})+
+  '<p class="sub" style="margin:4px 0 0">Garis merah: batas Rp250.000/bulan (≈ '+rp(lim/4)+' per minggu).</p></div>';
+ return banner('Bruno','Kesehatan sistem: apakah chatbot cepat, akurat, dan tersambung ke data UMPER.')+kpis+
+ '<div class="g2">'+cResp+cForm+'</div>'+
+ '<div class="g2">'+cFail+cCause+'</div>'+
+ cCost+
  '<div class="note pg"><span>ℹ️ Data bertanda <b>simulasi</b> belum bisa diukur oleh prototype ini (Gemini Vision, NLP formulir, biaya API). Sisanya dihitung dari log chatbot dan sinkronisasi Firebase.</span></div>'}
 
 // =====================================================================
