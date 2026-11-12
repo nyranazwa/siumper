@@ -53,7 +53,7 @@ function lineChart(o){const W=o.w||440,H=o.h||250,L=40,R=22,T=12,Bt=28,iw=W-L-R,
  const X=i=>L+(n<2?iw/2:i*iw/(n-1)),Y=v=>T+ih-(v-mn)/(mx-mn)*ih;let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img">';
  o.ticks.forEach(t=>{s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" stroke="#e8ebf0"/><text x="'+(L-8)+'" y="'+(Y(t)+4)+'" font-size="10.5" fill="#6b7686" text-anchor="end">'+(o.fmt?o.fmt(t):t)+'</text>'});
  const step=n>10?2:1;o.labels.forEach((l,i)=>{if(i%step===0||i===n-1)s+='<text x="'+X(i)+'" y="'+(H-8)+'" font-size="10.5" fill="#6b7686" text-anchor="middle">'+l+'</text>'});
- if(o.target)s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(o.target)+'" y2="'+Y(o.target)+'" stroke="#2a6fdb" stroke-dasharray="5 4" opacity=".7"/>';
+ (o.targets||(o.target?[{v:o.target}]:[])).forEach(t=>{s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(t.v)+'" y2="'+Y(t.v)+'" stroke="'+(t.color||'#2a6fdb')+'" stroke-dasharray="5 4" opacity=".8"/>'});
  o.series.forEach(se=>{const pts=se.vals.map((v,i)=>[X(i),Y(Math.min(Math.max(v,mn),mx))]);if(!pts.length)return;const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');
   if(se.area)s+='<path d="'+d+'L'+pts[pts.length-1][0]+' '+(T+ih)+'L'+pts[0][0]+' '+(T+ih)+'Z" fill="'+se.color+'" opacity=".08"/>';
   s+='<path d="'+d+'" fill="none" stroke="'+se.color+'" stroke-width="2"/>';
@@ -164,9 +164,9 @@ const NAV={it:[['beranda','🏠','Beranda'],['log','💬','Log Chatbot'],['aset'
 const PAGES={it:{beranda:itHome,log:logPage,aset:()=>asetPage(),integrasi:integPage,performa:perfPage,pengaturan:settingsPage},staff:{beranda:stHome,barang:barangPage,ruangan:ruanganPage,aset:asetPage,dbr:dbrPage,rekap:rekapPage,pengaturan:settingsPage}};
 const cur=()=>{const p=(location.hash.replace('#/','')||'beranda').split('/')[0];return PAGES[ROLE][p]?p:'beranda'};
 function render(){if(!D)return;sync();const p=cur();
- $('#uname').textContent=ROLE==='it'?'Bruno':'Abel';$('#urole').textContent=ROLE==='it'?'Tim IT':'Staf UMPER';
+ $('#uname').textContent=({it:'Bruno',staff:'Abel',pimpinan:'Pimpinan'})[ROLE]||'Abel';$('#urole').textContent=({it:'Tim IT',staff:'Staf UMPER',pimpinan:'Kepala UMPER'})[ROLE]||'Staf UMPER';
  $('#nav').innerHTML=NAV[ROLE].map(n=>'<a href="#/'+n[0]+'" class="'+(n[0]===p?'on':'')+'"><span class="i">'+n[1]+'</span>'+n[2]+'</a>').join('');
- $('#umenu').innerHTML='<div class="h">Tampilkan sebagai</div><button data-role="it" class="'+(ROLE==='it'?'on':'')+'">Tim IT – Bruno</button><button data-role="staff" class="'+(ROLE==='staff'?'on':'')+'">Staf UMPER – Abel</button>';
+ $('#umenu').innerHTML='<div class="h">Tampilkan sebagai</div><button data-role="it" class="'+(ROLE==='it'?'on':'')+'">Tim IT – Bruno</button><button data-role="staff" class="'+(ROLE==='staff'?'on':'')+'">Staf UMPER – Abel</button><button data-role="pimpinan" class="'+(ROLE==='pimpinan'?'on':'')+'">Pimpinan – Kepala UMPER</button>';
  $('#today').textContent=fmtFull(new Date());
  const y=window.scrollY;$('#pg').innerHTML=PAGES[ROLE][p]();window.scrollTo(0,y);sig=signature()}
 const signature=()=>BLK().length+'|'+rd(K_LOG,[]).length+'|'+rd(K_BOOK,[]).length+'|'+rd(K_REP,[]).length;

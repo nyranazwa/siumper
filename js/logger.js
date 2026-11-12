@@ -19,7 +19,7 @@
  wrap('doCekItem',(o,a)=>{logged=false;const r=o.apply(null,a);if(!logged)rec('barang',false,'Barang atau tanggal tidak terbaca');return r});
  wrap('doCekRoom',(o,a)=>{logged=false;const r=o.apply(null,a);if(!logged)rec('ruangan',false,'Ruangan atau tanggal tidak terbaca');return r});
  wrap('found',(o,a)=>{const c=String(a[0]).toUpperCase().replace(/\s/g,'');const ok=ITEMS.some(i=>i.code===c);
-  rec('aset',ok,ok?'Lokasi '+c+' ditemukan':'Kode aset tidak ditemukan');return o.apply(null,a)});
+  rec('aset',ok,ok?'Lokasi '+c+' ditemukan':'Kode aset tidak ditemukan ('+c+')');return o.apply(null,a)});
  wrap('doWhere',(o,a)=>{const it=S.item;if(it){const home=it.roomNo?null:ROOMS.find(r=>it.home===rl(r)||it.home===r.r),r=findRoom(a[0]);
    const sesuai=it.roomNo?dbrMatch(it,a[0]):!!(r&&r===home);const rep=rd(K_REP,[]);
    rep.push({t:new Date().toISOString(),code:it.code,name:it.name,home:it.home,seen:it.roomNo?String(a[0]).trim():(r?rl(r):String(a[0]).trim()),sesuai});wr(K_REP,rep.slice(-300));

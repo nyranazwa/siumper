@@ -114,3 +114,12 @@ small{color:var(--mut)}
 @media(max-width:900px){.rg{grid-template-columns:1fr}}
 .rg .tw table{min-width:1020px}.rg .tw td code{white-space:nowrap}.rg .tw td:nth-child(6){white-space:nowrap}.rg{grid-template-columns:270px minmax(0,1fr)}
 .rg .tw td:last-child{position:sticky;right:0;background:#fff;box-shadow:-6px 0 8px -6px rgba(20,30,50,.18)}.rg .tw th:last-child{position:sticky;right:0;background:#f4f6f9}
+
+/* Dashboard sesuai objective (obj.js) */
+.hm td.c{text-align:center;font-size:11px;font-weight:600;border-radius:4px;min-width:58px;padding:6px 4px}
+.hm .e{background:#dff3e8;color:#0f6b43}.hm .f{background:#fde4e4;color:#b42318}.hm .x{background:#eceff3;color:#6b7686}
+.scroll{max-height:380px;overflow:auto}
+.sim{margin-left:6px;font-size:10px;vertical-align:middle}
+.stat2{display:flex;align-items:center;gap:12px;margin-top:6px}
+.stat2 .big{font-size:22px;font-weight:700}
+.grn{color:#16915a}.red{color:#e5484d}
