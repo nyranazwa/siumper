@@ -8,9 +8,8 @@ let ROOMS=[...Array.from({length:22},(_,i)=>mk(GC,'Ruang '+(i+1),i<6?1:i<12?2:i<
 let BUILDINGS=[GC,GS,'Aula','Isola'];
 let BKEY={[GC]:['gedung c','dewi sartika'],[GS]:['sutomo'],'Aula':['aula'],'Isola':['isola']};
 let BFORM={[GC]:[1,1],[GS]:[1,1],'Aula':[0,0],'Isola':[1,0]}; // [isian nama ruangan, isian lantai]
-// DEMO sementara (belum ada database): barang & ruangan di bawah ini selalu 'tidak tersedia' pada tanggal/waktu apa pun.
-// Kosongkan array-nya (atau ganti dengan data database) untuk mengembalikan perilaku normal.
-let DEMO={items:['mic wireless'],rooms:['Aula']};
+// DEMO (tidak dipakai lagi): ketersediaan kini dihitung dari data reservasi (BOOK) + blokir manual admin UMPER (siumper-block).
+let DEMO={items:[],rooms:[]};
 let STOCK={'mic wireless':{n:'Mic Wireless',total:3,cond:'Baik'},'mic kabel':{n:'Mic Kabel',total:4,cond:'Baik'},'proyektor':{n:'Proyektor',total:2,cond:'Baik'},'layar':{n:'Layar Screen',total:2,cond:'Baik'},'speaker':{n:'Speaker',total:4,cond:'Cukup'},'kabel hdmi':{n:'Kabel HDMI',total:6,cond:'Baik'},'kabel roll':{n:'Kabel Roll',total:5,cond:'Baik'},'laptop':{n:'Laptop',total:3,cond:'Baik'},'pointer':{n:'Pointer',total:4,cond:'Baik'},'meja lipat':{n:'Meja Lipat',total:10,cond:'Cukup'}};
 let HOME={'mic wireless':'Gedung C (Dewi Sartika) - Ruang 5','proyektor':'Gedung C (Dewi Sartika) - Ruang 4','speaker':'Aula','kabel hdmi':'Gedung Dr. Sutomo - Ruang 3','mic kabel':'Gedung C (Dewi Sartika) - Ruang 5','layar':'Gedung C (Dewi Sartika) - Ruang 4','kabel roll':'Gedung Dr. Sutomo - Ruang 3','laptop':'Gedung Dr. Sutomo - Ruang 6','pointer':'Gedung C (Dewi Sartika) - Ruang 5','meja lipat':'Isola - Auditorium'};
 let ITEMS=[ // data DBR
@@ -30,7 +29,7 @@ const dn=i=>DAYN[dow(i)]+', '+fmt(i);
 const wt=x=>hh(x[0])+' - '+hh(x[1])+' WIB';
 function roomWin(r,i){if(!roomFree(r,i)||dow(i)===0)return null;let o=r.h[0],c=r.h[1];if(dow(i)===6)c=Math.min(c,14);return c>o?[o,c]:null}
 function winFor(r,days){let o=0,c=24;for(const i of days){const w=roomWin(r,i);if(!w)return null;o=Math.max(o,w[0]);c=Math.min(c,w[1])}return c>o?[o,c]:null}
-function dayReason(r,i){return !roomFree(r,i)?(DEMO.rooms.includes(r.r)?'sudah terpakai kegiatan lain':'sudah dipesan'):dow(i)===0?'libur kampus, hari Minggu':'di luar jam layanan'}
+function dayReason(r,i){return !roomFree(r,i)?(isBlk('room',rl(r).toLowerCase(),i)?'dinonaktifkan sementara oleh admin UMPER':'sudah dipesan'):dow(i)===0?'libur kampus, hari Minggu':'di luar jam layanan'}
 const flo=b=>[...new Set(ROOMS.filter(r=>r.b===b).map(r=>r.f))];
 const rlabel=r=>r.b===r.r?r.r:r.r+' ('+r.b+')';
 
@@ -63,6 +62,9 @@ let RES0=[];
 const _ls=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const resRead=()=>_ls('siumper-res')||RES0;
 const resWrite=l=>{try{localStorage.setItem('siumper-res',JSON.stringify(l))}catch(e){}};
+// Blokir manual oleh admin UMPER (dibuat di dashboard): {kind:'room'|'item',key,from,to,note}. to kosong = tanpa batas akhir.
+const blockRead=()=>_ls('siumper-block')||[];
+const isBlk=(kind,key,iso)=>blockRead().some(b=>b.kind===kind&&b.key===key&&(!b.from||iso>=b.from)&&(!b.to||iso<=b.to));
 const bookRead=()=>_ls('siumper-bookings')||JSON.parse(JSON.stringify(BOOK));
 const bookWrite=b=>{try{localStorage.setItem('siumper-bookings',JSON.stringify(b))}catch(e){}};
 function resRecord(x,kind,spj,sik){const d=new Date(),ymd=d.toISOString().slice(0,10).replace(/-/g,''),l=resRead();let n;do{n=String(100+Math.floor(Math.random()*900))}while(l.some(r=>r.id.endsWith('-'+n)));

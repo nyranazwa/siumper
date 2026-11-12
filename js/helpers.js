@@ -16,8 +16,8 @@ function findItem(t){t=t.toLowerCase();return Object.keys(STOCK).find(k=>t.inclu
 function findRoom(t){t=t.toLowerCase();const c=ROOMS.filter(r=>new RegExp('(^|[^a-z0-9])'+r.r.toLowerCase().replace(/\s+/g,'\\s*')+'(?![a-z0-9])').test(t));
  if(!c.length)return ROOMS.find(r=>BKEY[r.b]&&BFORM[r.b][0]===0&&BKEY[r.b].some(k=>t.includes(k)));
  return c.length<2?c[0]:c.find(r=>BKEY[r.b].some(k=>t.includes(k)))||c[0]}
-function itemFree(k,iso){if(DEMO.items.includes(k))return 0;if(k==='proyektor'&&new Date(iso+'T00:00:00Z').getUTCDay()===6)return 0;const used=BOOK.filter(b=>b.kind==='item'&&b.key===k&&b.date===iso).reduce((a,b)=>a+b.qty,0);return STOCK[k].total-used}
-function roomFree(r,iso){return !DEMO.rooms.includes(r.r)&&!BOOK.some(b=>b.kind==='room'&&b.key===rl(r).toLowerCase()&&b.date===iso)}
+function itemFree(k,iso){if(isBlk('item',k,iso))return 0;const used=BOOK.filter(b=>b.kind==='item'&&b.key===k&&b.date===iso).reduce((a,b)=>a+b.qty,0);return STOCK[k].total-used}
+function roomFree(r,iso){return !isBlk('room',rl(r).toLowerCase(),iso)&&!BOOK.some(b=>b.kind==='room'&&b.key===rl(r).toLowerCase()&&b.date===iso)}
 function setState(st,hint){S={...S,st};document.getElementById('hint').textContent=hint||''}
 const hh=n=>String(n).padStart(2,'0')+'.00';
 const winTxt=r=>hh(r.h[0])+' - '+hh(r.h[1])+' WIB';

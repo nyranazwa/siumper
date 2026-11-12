@@ -23,9 +23,13 @@ let D=null,BOOK=[],ROLE=rd(K_ROLE,'it'),PERIOD=7,SYNC=null,SRC_OK=true,sig='';
 // ---------- ketersediaan (sama dengan logika chatbot) ----------
 const rl=r=>r.b===r.r?r.r:r.b+' - '+r.r;
 const dow=i=>new Date(i+'T00:00:00Z').getUTCDay();
-const roomFree=(r,i)=>!D.demo.rooms.includes(r.r)&&!BOOK.some(b=>b.kind==='room'&&b.key===rl(r).toLowerCase()&&b.date===i);
+// Blokir manual oleh admin UMPER (key room = rl(r) huruf kecil, key item = kunci stok)
+const K_BLK='siumper-block',BLK=()=>rd(K_BLK,[]);
+const isBlk=(kind,key,i)=>BLK().some(b=>b.kind===kind&&b.key===key&&(!b.from||i>=b.from)&&(!b.to||i<=b.to));
+const saveBLK=l=>{try{localStorage.setItem(K_BLK,JSON.stringify(l))}catch(e){}render()};
+const roomFree=(r,i)=>!isBlk('room',rl(r).toLowerCase(),i)&&!BOOK.some(b=>b.kind==='room'&&b.key===rl(r).toLowerCase()&&b.date===i);
 function roomWin(r,i){if(!roomFree(r,i)||dow(i)===0)return null;let o=r.h[0],c=r.h[1];if(dow(i)===6)c=Math.min(c,14);return c>o?[o,c]:null}
-function itemFree(k,i){if(D.demo.items.includes(k))return 0;if(k==='proyektor'&&dow(i)===6)return 0;const used=BOOK.filter(b=>b.kind==='item'&&b.key===k&&b.date===i).reduce((a,b)=>a+b.qty,0);return Math.max(0,D.stock[k].total-used)}
+function itemFree(k,i){if(isBlk('item',k,i))return 0;const used=BOOK.filter(b=>b.kind==='item'&&b.key===k&&b.date===i).reduce((a,b)=>a+b.qty,0);return Math.max(0,D.stock[k].total-used)}
 const hh=n=>pad(n)+'.00';
 // ---------- data ----------
 async function load(){
@@ -138,9 +142,14 @@ function stHome(){const today=isoL(new Date()),A=assets(),stockK=Object.keys(D.s
  '<div class="card"><div class="ch"><h3>Kondisi Barang DBR</h3><a href="#/dbr">Lihat semua →</a></div><div class="donutw">'+donut(KB.map(x=>({v:x.v,color:x.c,label:x.l})),Math.round(KB[0].v/Math.max(1,A.length)*100)+'%','Kondisi baik',120)+'<div class="dl">'+KB.map(x=>'<div><i style="background:'+x.c+'"></i>'+x.l+'<span class="p">'+x.v+'</span></div>').join('')+'</div></div></div>'+
  integCard()+'<div class="card"><div class="ch"><h3>Log Terakhir</h3></div><div class="tw"><table><thead><tr><th>Waktu</th><th>Jenis</th><th>Status</th></tr></thead><tbody>'+recent(allLogs()).slice(0,5).map(l=>'<tr><td>'+fmtT(l.t)+'</td><td>Permintaan</td><td>'+typeBadge(l)+'</td></tr>').join('')+'</tbody></table></div></div></div>'}
 let DSEL=isoL(new Date());
+// Kartu "Atur Ketersediaan" (tampilan Staf UMPER / admin): nonaktifkan barang atau ruangan pada rentang tanggal.
+function blockCard(kind){const opts=kind==='room'?RM().map(r=>[rl(r).toLowerCase(),rl(r)]):Object.entries(D.stock).map(([k,s])=>[k,s.n]),name=Object.fromEntries(opts),list=BLK().filter(b=>b.kind===kind),tgl=s=>s?fmtD(new Date(s+'T00:00:00')):'';
+ return '<div class="card" style="margin-top:16px"><h3>Atur Ketersediaan (Admin UMPER)</h3><p>Ketersediaan dihitung otomatis dari data reservasi. Gunakan form ini hanya untuk menonaktifkan '+(kind==='room'?'ruangan':'barang')+' secara manual (mis. perbaikan atau kegiatan khusus).</p>'+
+ '<form data-blk-form="'+kind+'" class="tools"><select name="tgt">'+opts.map(o=>'<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>').join('')+'</select><label>Mulai: <input type="date" name="from" value="'+DSEL+'" required></label><label>Sampai: <input type="date" name="to"></label><input type="text" name="note" placeholder="Alasan (opsional)"><button class="btn" type="submit">Nonaktifkan</button></form>'+
+ (list.length?'<div class="tw"><table><thead><tr><th>'+(kind==='room'?'Ruangan':'Barang')+'</th><th>Periode</th><th>Alasan</th><th></th></tr></thead><tbody>'+list.map(b=>'<tr><td>'+esc(name[b.key]||b.key)+'</td><td>'+tgl(b.from)+(b.to?' – '+tgl(b.to):' dan seterusnya')+'</td><td>'+esc(b.note||'-')+'</td><td><button class="btn" data-act="unblk" data-id="'+esc(b.id)+'">Aktifkan kembali</button></td></tr>').join('')+'</tbody></table></div>':'<p class="sub">Tidak ada yang dinonaktifkan manual.</p>')+'</div>'}
 const dateTool=()=>'<div class="tools"><label>Tanggal: <input type="date" data-date value="'+DSEL+'"></label></div>';
-function barangPage(){const A=assets();return '<h2 class="ph">Ketersediaan Barang</h2><p class="sub">Stok total, jumlah tersedia, dan kondisi barang pada tanggal terpilih.</p>'+dateTool()+'<div class="tw"><table><thead><tr><th>Barang</th><th>Stok total</th><th>Dipinjam</th><th>Tersedia</th><th>Kondisi</th><th>Lokasi simpan</th><th>Status</th></tr></thead><tbody>'+Object.entries(D.stock).map(([k,s])=>{const f=itemFree(k,DSEL);return '<tr><td>'+s.n+'</td><td>'+s.total+'</td><td>'+(s.total-f)+'</td><td>'+f+'</td><td>'+s.cond+'</td><td>'+esc(D.home[k]||'-')+'</td><td><span class="bd '+(f>0?'ok':'bad')+'">'+(f>0?'Tersedia':'Tidak tersedia')+'</span></td></tr>'}).join('')+'</tbody></table></div>'}
-function ruanganPage(){return '<h2 class="ph">Ketersediaan Ruangan</h2><p class="sub">Status ruangan berdasarkan tanggal dan jam layanan.</p>'+dateTool()+'<div class="tw"><table><thead><tr><th>Gedung</th><th>Ruangan</th><th>Lantai</th><th>Status</th><th>Jam tersedia</th><th>Keterangan</th></tr></thead><tbody>'+RM().map(r=>{const w=roomWin(r,DSEL);const why=!roomFree(r,DSEL)?'Sudah dipesan / dipakai':dow(DSEL)===0?'Libur kampus (Minggu)':'';return '<tr><td>'+esc(r.b)+'</td><td>'+esc(r.r)+'</td><td>'+r.f+'</td><td><span class="bd '+(w?'ok':'bad')+'">'+(w?'Tersedia':'Tidak tersedia')+'</span></td><td>'+(w?hh(w[0])+' - '+hh(w[1])+' WIB':'-')+'</td><td>'+why+'</td></tr>'}).join('')+'</tbody></table></div>'}
+function barangPage(){const A=assets();return '<h2 class="ph">Ketersediaan Barang</h2><p class="sub">Stok total, jumlah tersedia, dan kondisi barang pada tanggal terpilih.</p>'+dateTool()+'<div class="tw"><table><thead><tr><th>Barang</th><th>Stok total</th><th>Dipinjam</th><th>Tersedia</th><th>Kondisi</th><th>Lokasi simpan</th><th>Status</th></tr></thead><tbody>'+Object.entries(D.stock).map(([k,s])=>{const f=itemFree(k,DSEL);return '<tr><td>'+s.n+'</td><td>'+s.total+'</td><td>'+(s.total-f)+'</td><td>'+f+'</td><td>'+s.cond+'</td><td>'+esc(D.home[k]||'-')+'</td><td><span class="bd '+(f>0?'ok':'bad')+'">'+(f>0?'Tersedia':isBlk('item',k,DSEL)?'Dinonaktifkan admin':'Tidak tersedia')+'</span></td></tr>'}).join('')+'</tbody></table></div>'+blockCard('item')}
+function ruanganPage(){return '<h2 class="ph">Ketersediaan Ruangan</h2><p class="sub">Status ruangan berdasarkan tanggal dan jam layanan.</p>'+dateTool()+'<div class="tw"><table><thead><tr><th>Gedung</th><th>Ruangan</th><th>Lantai</th><th>Status</th><th>Jam tersedia</th><th>Keterangan</th></tr></thead><tbody>'+RM().map(r=>{const w=roomWin(r,DSEL);const why=!roomFree(r,DSEL)?(isBlk('room',rl(r).toLowerCase(),DSEL)?'Dinonaktifkan admin UMPER':'Sudah dipesan'):dow(DSEL)===0?'Libur kampus (Minggu)':'';return '<tr><td>'+esc(r.b)+'</td><td>'+esc(r.r)+'</td><td>'+r.f+'</td><td><span class="bd '+(w?'ok':'bad')+'">'+(w?'Tersedia':'Tidak tersedia')+'</span></td><td>'+(w?hh(w[0])+' - '+hh(w[1])+' WIB':'-')+'</td><td>'+why+'</td></tr>'}).join('')+'</tbody></table></div>'+blockCard('room')}
 let AF='';
 function asetPage(){const A=assets().filter(a=>!AF||a.st===AF);const lab={sesuai:['ok','Sesuai'],tidak:['bad','Tidak sesuai'],belum:['gr','Belum tercatat']};
  return '<h2 class="ph">Lokasi Asset (DBR)</h2><p class="sub">Lokasi resmi menurut DBR dibandingkan laporan terakhir dari chatbot /lacak.</p><div class="tools"><select data-af><option value="">Semua status</option>'+Object.entries(lab).map(([k,v])=>'<option value="'+k+'"'+(AF===k?' selected':'')+'>'+v[1]+'</option>').join('')+'</select></div><div class="tw"><table><thead><tr><th>Kode</th><th>Nama barang</th><th>Lokasi resmi (DBR)</th><th>Terakhir terlihat</th><th>Status</th></tr></thead><tbody>'+A.map(a=>'<tr><td>'+a.code+'</td><td>'+esc(a.name)+'</td><td>'+esc(a.home||'-')+'</td><td>'+esc(a.seen||'-')+'</td><td><span class="bd '+lab[a.st][0]+'">'+lab[a.st][1]+'</span></td></tr>').join('')+'</tbody></table></div>'}
@@ -160,7 +169,7 @@ function render(){if(!D)return;sync();const p=cur();
  $('#umenu').innerHTML='<div class="h">Tampilkan sebagai</div><button data-role="it" class="'+(ROLE==='it'?'on':'')+'">Tim IT – Bruno</button><button data-role="staff" class="'+(ROLE==='staff'?'on':'')+'">Staf UMPER – Abel</button>';
  $('#today').textContent=fmtFull(new Date());
  const y=window.scrollY;$('#pg').innerHTML=PAGES[ROLE][p]();window.scrollTo(0,y);sig=signature()}
-const signature=()=>rd(K_LOG,[]).length+'|'+rd(K_BOOK,[]).length+'|'+rd(K_REP,[]).length;
+const signature=()=>BLK().length+'|'+rd(K_LOG,[]).length+'|'+rd(K_BOOK,[]).length+'|'+rd(K_REP,[]).length;
 function csv(name,rows){const t='﻿'+rows.map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name;a.click()}
 document.addEventListener('click',async e=>{const t=e.target.closest('[data-role],[data-act],#ubtn,#burger,#out');
  if(!t){$('#umenu').classList.remove('show');return}
@@ -170,6 +179,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-role
  if(t.dataset.role){ROLE=t.dataset.role;try{localStorage.setItem(K_ROLE,ROLE)}catch(x){}$('#umenu').classList.remove('show');location.hash='#/beranda';render();return}
  const a=t.dataset.act;
  if(a==='resync'){await load();render()}
+ if(a==='unblk')saveBLK(BLK().filter(b=>b.id!==t.dataset.id));
  if(a==='clr'){localStorage.removeItem(K_LOG);render()}
  if(a==='clrb'){localStorage.removeItem(K_BOOK);render()}
  if(a==='clrr'){localStorage.removeItem(K_REP);render()}
@@ -187,3 +197,6 @@ window.addEventListener('storage',()=>{if(signature()!==sig)render()});
 setInterval(()=>{if(D&&signature()!==sig&&!document.activeElement.matches('input,select'))render()},4000);
 load().then(ok=>{if(ok)render()});
 window.addEventListener('siumper-cloud',()=>{if(D&&!document.activeElement.matches('input,select,textarea'))render()});
+document.addEventListener('submit',e=>{const f=e.target;if(!f.matches('[data-blk-form]'))return;e.preventDefault();const g=n=>f.elements[n].value.trim(),from=g('from'),to=g('to');
+ if(!from)return alert('Isi tanggal mulai.');if(to&&to<from)return alert('Tanggal akhir harus sama atau setelah tanggal mulai.');
+ saveBLK(BLK().concat({id:'BLK-'+Date.now(),kind:f.dataset.blkForm,key:g('tgt'),from,to,note:g('note'),at:new Date().toISOString()}))});
