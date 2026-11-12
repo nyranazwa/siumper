@@ -4,7 +4,7 @@ const RES=()=>rd(K_RES,null)||D.reservations||[];
 const saveRES=l=>{try{localStorage.setItem(K_RES,JSON.stringify(l))}catch(e){alert('Gagal menyimpan ke browser.')}};
 const bookBase=()=>rd(K_BOOK,null)||JSON.parse(JSON.stringify(D.bookings));
 const roomKey=r=>(r.gedung===r.ruang?r.ruang:r.gedung+' - '+r.ruang).toLowerCase();
-function setStatus(id,st){const l=RES(),r=l.find(z=>z.id===id);if(!r)return;r.status=st;saveRES(l);
+function setStatus(id,st){const l=RES(),r=l.find(z=>z.id===id);if(!r)return;r.status=st;if(st==='Diproses')delete r.verified;else r.verified=new Date().toISOString();saveRES(l);
  const b=bookBase().filter(z=>z.res!==id);
  if(st==='Disetujui')r.dates.forEach(d=>b.push(r.kind==='room'?{kind:'room',key:roomKey(r),date:d,res:id}:{kind:'item',key:r.item,qty:r.qty,date:d,res:id}));
  try{localStorage.setItem(K_BOOK,JSON.stringify(b))}catch(e){}render()}

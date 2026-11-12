@@ -70,7 +70,7 @@ const bookWrite=b=>{try{localStorage.setItem('siumper-bookings',JSON.stringify(b
 function resRecord(x,kind,spj,sik){const d=new Date(),ymd=d.toISOString().slice(0,10).replace(/-/g,''),l=resRead();let n;do{n=String(100+Math.floor(Math.random()*900))}while(l.some(r=>r.id.endsWith('-'+n)));
  const rec={id:'TRX-'+(kind==='room'?'RG':'BR')+'-'+ymd+'-'+n,kind,created:d.toISOString(),name:x.name,nim:x.id,hp:x.phone||'',org:x.org,need:x.need||'',dates:x.date.days||[x.date.iso],time:x.time,status:'Diproses',spj,sik,source:'chatbot'};
  if(kind==='room'){rec.gedung=x.room.b;rec.ruang=x.room.r}else{rec.item=x.item;rec.itemNama=STOCK[x.item].n;rec.qty=x.qty}return rec}
-function resApprove(id,status){const l=resRead(),r=l.find(z=>z.id===id);if(!r)return;r.status=status;resWrite(l);
+function resApprove(id,status){const l=resRead(),r=l.find(z=>z.id===id);if(!r)return;r.status=status;if(status==='Diproses')delete r.verified;else r.verified=new Date().toISOString();resWrite(l);
  const b=bookRead().filter(z=>z.res!==id);
  if(status==='Disetujui')r.dates.forEach(d=>b.push(r.kind==='room'?{kind:'room',key:(r.gedung===r.ruang?r.ruang:r.gedung+' - '+r.ruang).toLowerCase(),date:d,res:id}:{kind:'item',key:r.item,qty:r.qty,date:d,res:id}));
  bookWrite(b)}

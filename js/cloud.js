@@ -17,7 +17,8 @@
  const ls=window.localStorage,P=Storage.prototype,_set=P.setItem,_rem=P.removeItem;
  const KV=['siumper-dbr','siumper-res','siumper-bookings','siumper-block']; // satu dokumen per kunci (terakhir menang)
  const COL={'siumper-log':{name:'log',max:1000},'siumper-reports':{name:'reports',max:300}}; // satu dokumen per entri
- const warn=e=>console.warn('[cloud]',e&&e.message||e);
+ const warn=e=>{console.warn('[cloud]',e&&e.message||e);try{rawSet('siumper-syncfail',String((+ls.getItem('siumper-syncfail')||0)+1))}catch(x){}};
+ const touch=()=>{try{rawSet('siumper-lastsync',new Date().toISOString())}catch(x){}};
  const fire=()=>window.dispatchEvent(new Event('siumper-cloud'));
  const rawSet=(k,v)=>_set.call(ls,k,v),rawDel=k=>_rem.call(ls,k);
  const canon=e=>JSON.stringify(Object.keys(e).sort().map(k=>[k,e[k]]));
@@ -58,6 +59,7 @@
  KV.forEach(k=>{
   let first=true;
   db.collection('kv').doc(k).onSnapshot(s=>{
+   touch();
    if(s.metadata.hasPendingWrites)return; // gema dari tulisan sendiri
    const had=first;first=false;
    if(s.exists){const v=s.data().v;if(ls.getItem(k)!==v){rawSet(k,v);fire()}}
@@ -68,6 +70,7 @@
  Object.keys(COL).forEach(k=>{
   const c=COL[k];let first=true,res;ready[k]=new Promise(r=>res=r);
   db.collection(c.name).orderBy('t','desc').limit(c.max).onSnapshot(s=>{
+   touch();
    const remote=s.docs.map(d=>{seen[k].add(d.id);return d.data()});
    let list=remote;
    if(first){ // gabungkan entri lokal lama yang belum ada di database
