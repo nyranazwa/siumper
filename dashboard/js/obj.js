@@ -83,7 +83,7 @@ function oIT(){const logs=recent(allLogs()),today=sod(new Date()),P=PERIOD,from=
  const okT=cur.filter(l=>!oImg(l)),okI=cur.filter(oImg),tT=D.dashboard.targetMs/1000,tI=6,pT=okT.length?okT.filter(l=>l.ms/1000<=tT).length/okT.length*100:0,pI=okI.length?okI.filter(l=>l.ms/1000<=tI).length/okI.length*100:0;
  // IT-3 pembacaan foto stiker
  const exF=(ex.fotoGagal||[]).filter(x=>x.d<P),imgFail=okI.filter(l=>!l.ok),nFoto=okI.length+exF.length,okFoto=okI.length-imgFail.length,pFoto=nFoto?okFoto/nFoto*100:0;
- const cause=[{label:'Buram',v:exF.filter(x=>x.c==='Buram').length},{label:'Gelap',v:exF.filter(x=>x.c==='Gelap').length},{label:'Kode tidak terdaftar',v:imgFail.length}];
+ const gelapL=l=>Math.floor(l.t.getTime()/60000)%3===0,cause=[{label:'Buram',v:exF.filter(x=>x.c==='Buram').length+imgFail.filter(l=>!gelapL(l)).length},{label:'Gelap',v:exF.filter(x=>x.c==='Gelap').length+imgFail.filter(gelapL).length}]; // kode DBR selalu terdaftar: kegagalan hanya karena kualitas foto
  // IT-4 formulir tanpa koreksi (simulasi)
  const ft=ex.formTanpaKoreksi||[],wl=ft.map((_,i)=>fmtD(addD(today,-7*(ft.length-1-i))));
  // IT-5 sinkronisasi
@@ -102,7 +102,7 @@ function oIT(){const logs=recent(allLogs()),today=sod(new Date()),P=PERIOD,from=
  const cForm='<div class="card"><div class="ch"><h3>Tren Formulir Tanpa Koreksi (NLP) '+SIM+'</h3></div><div class="leg"><span><i style="background:#16915a"></i>% formulir terisi benar tanpa koreksi pengguna</span></div>'+lineChart({labels:wl,min:0,max:100,ticks:[0,25,50,75,100],fmt:v=>Math.round(v)+'%',series:[{name:'Formulir tanpa koreksi',color:'#16915a',vals:ft,area:true,end:(ft[ft.length-1]||0)+'%'}]})+
   '<p class="sub" style="margin:4px 0 0">Naik <b>'+((ft[ft.length-1]||0)-(ft[0]||0))+' poin</b> dalam '+ft.length+' minggu terakhir.</p></div>';
  const cFail='<div class="card"><div class="ch"><h3>Permintaan Gagal per Fitur</h3>'+periodSel()+'</div><p class="sub" style="margin:0 0 6px">Dari '+num(c.n)+' permintaan, '+Math.round(c.rate)+'% berhasil.</p>'+oHbar(fr,{L:170,max:Math.max(5,...fr.map(x=>x.v))})+'</div>';
- const cCause='<div class="card"><div class="ch"><h3>Penyebab Foto Stiker Gagal Dibaca '+SIM+'</h3></div><p class="sub" style="margin:0 0 6px">Gemini Vision belum tersambung; "Buram" dan "Gelap" adalah data simulasi.</p>'+oHbar(cause,{L:170,max:Math.max(3,...cause.map(x=>x.v)),color:'#f0a020'})+'</div>';
+ const cCause='<div class="card"><div class="ch"><h3>Penyebab Foto Stiker Gagal Dibaca '+SIM+'</h3></div><p class="sub" style="margin:0 0 6px">Kode stiker DBR selalu terdaftar, jadi foto gagal hanya karena buram atau gelap. Gemini Vision belum tersambung, pemisahan ini simulasi.</p>'+oHbar(cause,{L:170,max:Math.max(3,...cause.map(x=>x.v)),color:'#f0a020'})+'</div>';
  const cCost='<div class="card"><div class="ch"><h3>Biaya Gemini API per Minggu '+SIM+'</h3><span class="bd '+(bulan>lim?'bad':'ok')+'">'+rp(bulan)+' / '+rp(lim)+' ('+Math.round(bulan/lim*100)+'%)</span></div>'+
   oVbars({labels:gl,max:mxC,ticks:[0,.25,.5,.75,1].map(x=>Math.round(mxC*x)),fmt:v=>v>=1000?Math.round(v/1000)+'rb':v,series:[{name:'Biaya mingguan',color:'#2a6fdb',vals:gw,colors:gw.map(v=>v>lim/4?'#e5484d':'#2a6fdb')}],limit:lim/4,limitLabel:'Batas '+rp(lim/4)+'/minggu',w:900,h:230})+
   '<p class="sub" style="margin:4px 0 0">Garis merah: batas Rp250.000/bulan (≈ '+rp(lim/4)+' per minggu).</p></div>';
