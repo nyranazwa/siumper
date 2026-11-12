@@ -12,12 +12,8 @@ const oAvgS=ls=>ls.length?ls.reduce((a,l)=>a+l.ms,0)/ls.length/1000:0;
 const oPct=(a,b)=>b?(a-b)/b*100:0;
 const monthStart=()=>{const d=sod(new Date());d.setDate(1);return d};
 // ---------- grafik tambahan ----------
-function oHbar(rows,o){o=o||{};const W=440,rh=34,L=o.L||130,H=rows.length*rh+8,iw=W-L-52,mx=o.max||Math.max(1,...rows.map(r=>r.v));
- const f=v=>o.fmt?o.fmt(v):v;let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img">';
- rows.forEach((r,i)=>{const y=i*rh+4,w=Math.max(0,Math.min(1,r.v/mx))*iw,c=r.color||o.color||'#e5484d';
-  s+='<text x="'+(L-8)+'" y="'+(y+16)+'" font-size="11.5" text-anchor="end" fill="#1b2330">'+esc(r.label)+'</text><rect x="'+L+'" y="'+y+'" width="'+iw+'" height="22" fill="#eef0f4" rx="3"/>'+
-  '<rect x="'+L+'" y="'+y+'" width="'+w+'" height="22" fill="'+c+'" rx="3"><title>'+esc(r.label+': '+f(r.v))+'</title></rect><text x="'+(L+iw+6)+'" y="'+(y+16)+'" font-size="11.5" font-weight="700" fill="#1b2330">'+f(r.v)+'</text>'});
- return s+'</svg>'}
+function oHbar(rows,o){o=o||{};const mx=o.max||Math.max(1,...rows.map(r=>r.v)),f=v=>o.fmt?o.fmt(v):v;
+ return '<div class="hb">'+rows.map(r=>'<div class="hr"><span class="hl" title="'+esc(r.label)+'">'+esc(r.label)+'</span><div class="ht"><div class="hf" style="width:'+Math.max(0,Math.min(100,r.v/mx*100))+'%;background:'+(r.color||o.color||'#e5484d')+'" title="'+esc(r.label+': '+f(r.v))+'"></div></div><b class="hv">'+f(r.v)+'</b></div>').join('')+'</div>'}
 function oVbars(o){const W=o.w||440,H=o.h||250,L=48,R=14,T=14,B=30,iw=W-L-R,ih=H-T-B,n=o.labels.length,ns=o.series.length,gw=iw/n,bw=Math.min(W>600?64:34,gw*.74/ns),mx=o.max,Y=v=>T+ih-Math.min(v,mx)/mx*ih,f=v=>o.fmt?o.fmt(v):v;
  let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img">';
  o.ticks.forEach(t=>{s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" stroke="#e8ebf0"/><text x="'+(L-8)+'" y="'+(Y(t)+4)+'" font-size="10.5" fill="#6b7686" text-anchor="end">'+f(t)+'</text>'});
