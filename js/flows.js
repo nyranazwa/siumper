@@ -27,7 +27,7 @@ function cekRoomCore(r,d){setState('idle');S.pre=null;const days=dys(d),multi=da
  S.preR=w?{room:r,date:d}:null;
  const ask='\n\nApakah kamu ingin melakukan peminjaman ruangan ini?\nSilakan gunakan /reservasi untuk melanjutkan proses peminjaman.';
  const head='✅ '+B('Informasi ruangan ditemukan')+'\n\n';
- if(w&&!multi)return bot(head+rlabel(r)+' tersedia pada:\n📅 '+d.txt+'\n⏰ Pukul '+wt(w)+(dow(days[0])===6?'\n(Hari Sabtu jam layanan lebih singkat.)':'')+'\n(Waktu peminjaman harus berada dalam jam tersebut.)'+ask,[['/Reservasi',reservasi]]);
+ if(w&&!multi)return bot(head+rlabel(r)+' tersedia pada:\n📅 '+d.txt+'\n⏰ Pukul '+wt(w)+(days.some(x=>dow(x)===0||dow(x)===6)?'\n(Akhir pekan: peminjaman tetap perlu persetujuan Staf UMPER.)':'')+'\n(Waktu peminjaman harus berada dalam jam tersebut.)'+ask,[['/Reservasi',reservasi]]);
  if(w){const same=per.every(x=>x.w[0]===per[0].w[0]&&x.w[1]===per[0].w[1]);
   return bot(head+rlabel(r)+' tersedia di '+B('seluruh tanggal')+' yang dipilih:\n📅 '+d.txt+'\n\n'+(same?'⏰ Setiap hari pukul '+wt(per[0].w):'Jam tersedia per hari:\n'+per.map(x=>'• '+dn(x.i)+': '+wt(x.w)).join('\n'))+'\n\n✔️ Jam yang bisa dipakai di semua hari: '+B(wt(w))+'\n(Peminjaman lebih dari sehari memakai jam mulai dan selesai yang sama setiap harinya, dan harus berada dalam jam tersebut.)'+ask,[['/Reservasi',reservasi]])}
  const ok=per.filter(x=>x.w);

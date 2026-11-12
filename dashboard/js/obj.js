@@ -43,8 +43,8 @@ function oStaf(){const now=new Date(),today=isoL(now),A=assets(),logs=allLogs(),
  // S-2 jadwal ruangan 7 hari
  const days=Array.from({length:7},(_,i)=>addD(now,i)),iso=days.map(isoL),rooms=RM().filter(r=>!OBLD||r.b===OBLD),blds=[...new Set(RM().map(r=>r.b))];
  const apr=RES().filter(x=>x.kind==='room'&&x.status==='Disetujui'),busy=(r,i)=>!roomFree(r,i)||apr.some(x=>roomKey(x)===rl(r).toLowerCase()&&x.dates.includes(i));
- const cell=(r,i)=>{if(dow(i)===0)return'<td class="c x">Libur</td>';return busy(r,i)?'<td class="c f">Terisi</td>':'<td class="c e">Kosong</td>'};
- const terisiHariIni=RM().filter(r=>dow(today)!==0&&busy(r,today)).length;
+ const cell=(r,i)=>{return busy(r,i)?'<td class="c f">Terisi</td>':'<td class="c e">Kosong</td>'};
+ const terisiHariIni=RM().filter(r=>busy(r,today)).length;
  const sched='<div class="tools"><label>Gedung: <select data-obld><option value="">Semua gedung</option>'+blds.map(b=>'<option value="'+esc(b)+'"'+(OBLD===b?' selected':'')+'>'+esc(b)+'</option>').join('')+'</select></label><span class="sub" style="margin:0">Hari ini: <b>'+terisiHariIni+'</b> dari '+RM().length+' ruangan terisi</span></div>'+
   '<div class="tw scroll"><table class="hm"><thead><tr><th>Ruangan</th>'+days.map((d,i)=>'<th style="text-align:center">'+(i?DAYS[d.getDay()].slice(0,3)+' '+d.getDate():'Hari ini')+'</th>').join('')+'</tr></thead><tbody>'+
   rooms.map(r=>'<tr><td>'+esc(rl(r))+'</td>'+iso.map(i=>cell(r,i)).join('')+'</tr>').join('')+'</tbody></table></div>';
@@ -67,7 +67,7 @@ function oStaf(){const now=new Date(),today=isoL(now),A=assets(),logs=allLogs(),
   kpi('🏷️','r','Stiker bermasalah',stk.length,'perlu dicetak ulang')+'</div>'+
  '<div class="g2"><div class="card"><div class="ch"><h3>📝 Antrean Verifikasi Reservasi</h3><a href="#/reservasi">Buka Reservasi →</a></div>'+antre+'</div>'+
  '<div class="card"><div class="ch"><h3>📦 Barang Habis / Menipis</h3><a href="#/barang">Ketersediaan Barang →</a></div>'+brg+'</div></div>'+
- '<div class="card"><div class="ch"><h3>🗓️ Jadwal Ruangan 7 Hari ke Depan</h3><a href="#/ruangan">Ketersediaan Ruangan →</a></div>'+leg([['Kosong','#16915a'],['Terisi / dinonaktifkan','#e5484d'],['Libur','#9aa3b0']])+sched+'</div>'+
+ '<div class="card"><div class="ch"><h3>🗓️ Jadwal Ruangan 7 Hari ke Depan</h3><a href="#/ruangan">Ketersediaan Ruangan →</a></div>'+leg([['Kosong','#16915a'],['Terisi / dinonaktifkan','#e5484d'],['Akhir pekan boleh dipesan (perlu persetujuan)','#9aa3b0']])+sched+'</div>'+
  '<div class="g2"><div class="card"><div class="ch"><h3>🏷️ Stiker QR Gagal Dibaca Berulang</h3><a href="#/aset">Lokasi Aset →</a></div>'+stiker+'</div>'+
  '<div class="card"><div class="ch"><h3>✅ Kelengkapan Kode Stiker per Gedung</h3><a href="#/dbr">Kelola DBR →</a></div><p class="sub" style="margin:0 0 8px">Persentase barang DBR yang kode stikernya terisi dan berformat benar.</p>'+oHbar(lengkap,{max:100,fmt:v=>v+'%',L:110})+'</div></div>'}
 

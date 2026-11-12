@@ -27,9 +27,9 @@ const DAYN=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
 const dow=i=>new Date(i+'T00:00:00Z').getUTCDay();
 const dn=i=>DAYN[dow(i)]+', '+fmt(i);
 const wt=x=>hh(x[0])+' - '+hh(x[1])+' WIB';
-function roomWin(r,i){if(!roomFree(r,i)||dow(i)===0)return null;let o=r.h[0],c=r.h[1];if(dow(i)===6)c=Math.min(c,14);return c>o?[o,c]:null}
+function roomWin(r,i){if(!roomFree(r,i))return null;const o=r.h[0],c=r.h[1];return c>o?[o,c]:null} // akhir pekan boleh dipesan; persetujuan tetap oleh Staf UMPER
 function winFor(r,days){let o=0,c=24;for(const i of days){const w=roomWin(r,i);if(!w)return null;o=Math.max(o,w[0]);c=Math.min(c,w[1])}return c>o?[o,c]:null}
-function dayReason(r,i){return !roomFree(r,i)?(isBlk('room',rl(r).toLowerCase(),i)?'dinonaktifkan sementara oleh admin UMPER':'sudah dipesan'):dow(i)===0?'libur kampus, hari Minggu':'di luar jam layanan'}
+function dayReason(r,i){return !roomFree(r,i)?(isBlk('room',rl(r).toLowerCase(),i)?'dinonaktifkan sementara oleh admin UMPER':'sudah dipesan'):'di luar jam layanan'}
 const flo=b=>[...new Set(ROOMS.filter(r=>r.b===b).map(r=>r.f))];
 const rlabel=r=>r.b===r.r?r.r:r.r+' ('+r.b+')';
 

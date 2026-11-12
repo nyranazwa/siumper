@@ -48,7 +48,7 @@ document.addEventListener('submit',e=>{const f=e.target;if(!f.matches('[data-res
  const g=n=>f.elements[n].value.trim(),dt=g('dt'),ws=g('ws'),we=g('we'),room=RTAB==='room';let msg='';
  if(we<=ws)msg='Jam selesai harus setelah jam mulai.';
  else if(room){const r=RM().find(x=>rl(x)===g('tgt')),w=roomWin(r,dt);
-  if(!w)msg=r.r+' tidak tersedia pada '+fIso(dt)+' ('+(!roomFree(r,dt)?(isBlk('room',rl(r).toLowerCase(),dt)?'dinonaktifkan admin UMPER':'sudah dipesan'):dow(dt)===0?'libur kampus, hari Minggu':'di luar jam layanan')+').';
+  if(!w)msg=r.r+' tidak tersedia pada '+fIso(dt)+' ('+(!roomFree(r,dt)?(isBlk('room',rl(r).toLowerCase(),dt)?'dinonaktifkan admin UMPER':'sudah dipesan'):'di luar jam layanan')+').';
   else if(+ws.slice(0,2)*60+ +ws.slice(3)<w[0]*60||+we.slice(0,2)*60+ +we.slice(3)>w[1]*60)msg=r.r+' hanya tersedia pukul '+hh(w[0])+' - '+hh(w[1])+' WIB pada tanggal itu.'}
  else{const k=g('tgt'),q=+g('qty')||1,fr=itemFree(k,dt);if(fr<q)msg=D.stock[k].n+' tidak tersedia pada '+fIso(dt)+' (sisa '+fr+' unit, diminta '+q+').'}
  RMSG=msg;if(msg){render();return}
