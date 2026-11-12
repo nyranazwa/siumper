@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Prototype SiUMPER: hanya 3 koleksi ini yang boleh diakses.
+    match /{col}/{doc} {
+      allow read, write: if col in ['kv', 'log', 'reports'];
+    }
+  }
+}
