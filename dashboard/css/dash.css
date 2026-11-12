@@ -129,3 +129,12 @@ small{color:var(--mut)}
 .ov{display:none}.sbx{display:none}
 @media(max-width:900px){.ban svg{opacity:.25}.sb.open+.ov{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:25}.sbx{display:block;position:absolute;top:10px;right:10px;z-index:2;border:0;background:rgba(255,255,255,.18);color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer}}
 @media(max-width:640px){.ban svg{display:none}}
+
+/* Batang horizontal berbasis HTML: label rata kiri, batang selebar kartu */
+.hb{display:flex;flex-direction:column;gap:11px;margin-top:6px}
+.hr{display:grid;grid-template-columns:minmax(120px,34%) 1fr 48px;align-items:center;gap:12px;font-size:13px}
+.hl{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ht{background:#eef0f4;border-radius:4px;height:22px;overflow:hidden}.hf{height:100%;border-radius:4px;min-width:2px}
+.hv{text-align:left}
+@media(max-width:640px){.hr{grid-template-columns:minmax(90px,38%) 1fr 40px;gap:8px;font-size:12px}}
+.hl{white-space:normal;line-height:1.25}
