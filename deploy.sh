@@ -11,7 +11,6 @@ cd "$(dirname "$0")"
 git config credential.helper osxkeychain
 MSG="${1:-Update $(date '+%Y-%m-%d %H:%M')}"
 git add -A
-if git diff --cached --quiet; then echo "Tidak ada perubahan untuk di-deploy."; exit 0; fi
-git commit -q -m "$MSG"
+if ! git diff --cached --quiet; then git commit -q -m "$MSG"; fi
 git push origin main
 echo "Selesai. Situs diperbarui dalam 1-2 menit: https://nyranazwa.github.io/siumper/"
