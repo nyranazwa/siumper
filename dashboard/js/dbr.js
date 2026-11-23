@@ -1,5 +1,5 @@
 // Modul DBR (Daftar Barang Ruangan): Gedung -> (Rincian Gedung) Kelola Rincian Barang DBR.
-// Disimpan di localStorage 'siumper-dbr' (awal dari data.json -> dbr). Chatbot /lacak membaca data yang sama.
+// Disimpan di localStorage 'siumper-dbr' (awal dari data.json -> dbr). Chatbot membaca data yang sama (ruangan dan stok barang).
 const K_DBR='siumper-dbr';
 const DBR=()=>rd(K_DBR,null)||D.dbr;
 const cloneDB=()=>JSON.parse(JSON.stringify(DBR()));
@@ -25,24 +25,18 @@ let DQ='',DEDIT=null;
 const gLantai=(db,g)=>(db.gedung&&db.gedung[g]&&db.gedung[g].lantai)||Math.max(1,...db.rooms.filter(r=>r.gedung===g).map(r=>r.f||1));
 
 // turunan aset (dipakai halaman Lokasi Aset di Tim IT dan Beranda)
-function assets(){const db=DBR(),rep={},rm={};rd(K_REP,[]).forEach(r=>rep[r.code]=r);db.rooms.forEach(r=>rm[r.id]=r);
- return db.items.filter(i=>rm[i.roomId]).map(i=>{const r=rm[i.roomId],home=roomLabel(r),rp=rep[i.sticker],seen=rp?rp.seen:(i.seen||home);
-  const st=rp?(rp.sesuai?'sesuai':'tidak'):(seen===home?'sesuai':'tidak');
-  return{code:i.sticker,kode:i.kode,name:i.nama,home,seen,st,item:i,room:r,lengkap:!!(i.merk&&i.tahun&&i.ket)}})}
-function integ(){return[['Inventaris barang',Object.keys(D.stock).length,'jenis barang'],['Jadwal ruangan',RM().length,'ruangan'],['Lokasi aset (DBR)',DBR().items.length,'barang pada '+DBR().rooms.length+' ruangan']]}
+function assets(){const db=DBR(),rm={};db.rooms.forEach(r=>rm[r.id]=r);
+ return db.items.filter(i=>rm[i.roomId]).map(i=>{const r=rm[i.roomId],home=roomLabel(r);
+  return{code:i.sticker,kode:i.kode,name:i.nama,home,item:i,room:r,lengkap:!!(i.merk&&i.tahun&&i.ket)}})}
+function integ(){return[['Inventaris barang',Object.keys(D.stock).length,'jenis barang'],['Jadwal ruangan',RM().length,'ruangan'],['Daftar barang ruangan (DBR)',DBR().items.length,'barang pada '+DBR().rooms.length+' ruangan']]}
 
-// ---------- Tim IT: Lokasi Aset ----------
-function asetPage(){const all=assets(),A=all.filter(a=>!AF||a.st===AF),lab={sesuai:['ok','Sesuai'],tidak:['bad','Tidak sesuai']},ns=all.filter(a=>a.st==='sesuai').length,nt=all.length-ns;
- return '<h2 class="ph">Lokasi Aset (DBR)</h2><p class="sub">Lokasi resmi menurut DBR dibandingkan laporan terakhir dari chatbot /lacak. Data barang dikelola Staf UMPER di menu DBR.</p>'+
- '<div class="kpis">'+kpi('📦','r','Total barang DBR',all.length,'')+kpi('✅','g','Sesuai lokasi',ns,'')+kpi('📍','r','Perlu diperiksa',nt,'')+kpi('💬','b','Laporan dari chatbot',rd(K_REP,[]).length,'')+'</div>'+
- '<div class="tools"><select data-af><option value="">Semua status</option>'+Object.entries(lab).map(([k,v])=>'<option value="'+k+'"'+(AF===k?' selected':'')+'>'+v[1]+'</option>').join('')+'</select><button class="btn sec2" data-act="csvaset">Unduh CSV</button></div><div class="tw"><table><thead><tr><th>Kode Stiker</th><th>Kode Barang</th><th>Nama barang</th><th>Lokasi resmi (DBR)</th><th>Terakhir terlihat</th><th>Status</th></tr></thead><tbody>'+A.map(a=>'<tr><td>'+a.code+'</td><td>'+a.kode+'</td><td>'+esc(a.name)+'</td><td>'+esc(a.home)+'</td><td>'+esc(a.seen)+'</td><td><span class="bd '+lab[a.st][0]+'">'+lab[a.st][1]+'</span></td></tr>').join('')+'</tbody></table></div>'}
 
 // ---------- Staf: daftar gedung ----------
 const gedMap=db=>{const m=new Map();db.rooms.forEach(r=>{if(!m.has(r.gedung))m.set(r.gedung,[]);m.get(r.gedung).push(r)});return m};
 const gKey=g=>encodeURIComponent(g);
 function dbrList(){const db=DBR(),q=DQ.toLowerCase(),gm=gedMap(db),cnt={};db.items.forEach(i=>cnt[i.roomId]=(cnt[i.roomId]||0)+1);
  const gs=[...gm.entries()].filter(([g])=>!q||g.toLowerCase().includes(q));
- return '<h2 class="ph">🏢 Daftar Barang Ruangan (DBR)</h2><p class="sub">Pilih gedung, buka Rincian Gedung untuk melihat ruangannya, lalu buka Rincian Barang untuk mengelola barang di ruangan itu. Setiap barang punya kode stiker untuk pelacakan lewat chatbot /lacak.</p>'+
+ return '<h2 class="ph">🏢 Daftar Barang Ruangan (DBR)</h2><p class="sub">Pilih gedung, buka Rincian Gedung untuk melihat ruangannya, lalu buka Rincian Barang untuk mengelola barang di ruangan itu. Setiap barang punya kode stiker unik.</p>'+
  '<div class="card"><div class="ch"><h3>Daftar Gedung</h3><button class="btn" data-dbr="ged-add">+ Tambah Gedung</button></div><div class="tools"><input data-dq placeholder="Cari nama gedung…" value="'+esc(DQ)+'" style="min-width:260px"></div>'+
  '<div class="tw"><table><thead><tr><th>No</th><th>Nama Gedung</th><th>Jumlah Ruangan</th><th>Jumlah Barang</th><th>Aksi</th></tr></thead><tbody>'+(gs.length?gs.map(([g,rs],i)=>'<tr><td>'+(i+1)+'</td><td><b>'+esc(g)+'</b></td><td>'+rs.length+'</td><td>'+rs.reduce((a,r)=>a+(cnt[r.id]||0),0)+'</td><td class="act"><a class="btn sm blue" href="#/dbr/'+gKey(g)+'">☰ Rincian Gedung</a> <button class="btn sm ylw" title="Ubah gedung" data-dbr="ged-edit" data-g="'+gKey(g)+'">✎</button> <button class="btn sm" title="Hapus gedung" data-dbr="ged-del" data-g="'+gKey(g)+'">🗑</button></td></tr>').join(''):'<tr><td colspan="5" class="empty">Tidak ada gedung.</td></tr>')+'</tbody></table></div></div>'}
 

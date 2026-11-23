@@ -16,7 +16,7 @@
  const db=firebase.firestore();
  const ls=window.localStorage,P=Storage.prototype,_set=P.setItem,_rem=P.removeItem;
  const KV=['siumper-dbr','siumper-res','siumper-bookings','siumper-block']; // satu dokumen per kunci (terakhir menang)
- const COL={'siumper-log':{name:'log',max:1000},'siumper-reports':{name:'reports',max:300}}; // satu dokumen per entri
+ const COL={'siumper-log':{name:'log',max:1000}}; // satu dokumen per entri
  const warn=e=>{console.warn('[cloud]',e&&e.message||e);try{rawSet('siumper-syncfail',String((+ls.getItem('siumper-syncfail')||0)+1))}catch(x){}};
  const touch=()=>{try{rawSet('siumper-lastsync',new Date().toISOString())}catch(x){}};
  const fire=()=>window.dispatchEvent(new Event('siumper-cloud'));

@@ -46,7 +46,7 @@ async function loadData(){
 
 // ---------- DBR (Daftar Barang Ruangan) ----------
 // db = {rooms:[{id,noRuang,nama,gedung}], items:[{id,roomId,nama,kode,merk,tahun,jumlah,ket,sticker}]}
-// ITEMS untuk /lacak diturunkan dari DBR; code = kode stiker unik per baris barang.
+// code = kode stiker unik per baris barang (data DBR).
 function dbrToItems(db){const rm={};db.rooms.forEach(r=>rm[r.id]=r);return db.items.filter(i=>rm[i.roomId]).map(i=>{const r=rm[i.roomId];return{code:i.sticker,name:i.nama,home:r.gedung+' - '+r.nama,roomNo:r.noRuang,roomName:r.nama,kode:i.kode,ket:i.ket||''}})}
 function dbrMatch(it,t){const n=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');const q=n(t);return q.includes(n(it.roomNo))||q.includes(n(it.roomName))}
 
