@@ -5,8 +5,7 @@ const OX=()=>D.dashboard.extra||{};
 const SIM='<span class="bd gr sim" title="Data simulasi: belum bisa diukur oleh prototype">simulasi</span>';
 const rp=n=>'Rp'+num(Math.round(n));
 // ---------- pengelompokan log ----------
-const oFeat=l=>l.feat||({barang:'/cek',ruangan:'/cek',aset:'/lacak'})[l.type]||(/reservasi/i.test(l.ket)?'/reservasi':'/start');
-const oImg=l=>l.type==='aset'&&/ditemukan/.test(l.ket)&&!/Pelaporan/.test(l.ket); // pembacaan foto stiker
+const oFeat=l=>l.feat||({barang:'/cek',ruangan:'/cek'})[l.type]||(/reservasi/i.test(l.ket)?'/reservasi':'/start');
 const oRate=ls=>ls.length?ls.filter(l=>l.ok).length/ls.length*100:0;
 const oAvgS=ls=>ls.length?ls.reduce((a,l)=>a+l.ms,0)/ls.length/1000:0;
 const oPct=(a,b)=>b?(a-b)/b*100:0;
@@ -48,38 +47,29 @@ function oStaf(){const now=new Date(),today=isoL(now),A=assets(),logs=allLogs(),
  // S-3 barang habis / menipis
  const stok=Object.entries(D.stock).map(([k,s])=>{const f=itemFree(k,today),t=s.total,st=f===0?'habis':f<=Math.max(1,Math.ceil(t*.25))?'menipis':'ok';return{k,n:s.n,f,t,st,blk:isBlk('item',k,today)}}).filter(x=>x.st!=='ok').sort((a,b)=>(a.st==='habis'?0:1)-(b.st==='habis'?0:1)||a.f-b.f);
  const brg='<div class="tw"><table><thead><tr><th>Barang</th><th>Tersedia</th><th>Status</th></tr></thead><tbody>'+(stok.length?stok.map(x=>'<tr><td>'+esc(x.n)+'</td><td>'+x.f+' dari '+x.t+'</td><td><span class="bd '+(x.st==='habis'?'bad':'warn')+'">'+(x.st==='habis'?'Habis':'Menipis')+'</span>'+(x.blk?' <small>(dinonaktifkan admin)</small>':'')+'</td></tr>').join(''):'<tr><td colspan="3" class="empty">Semua barang tersedia cukup hari ini.</td></tr>')+'</tbody></table></div>';
- // S-4 stiker gagal dibaca berulang
- const fc={};(ex.stikerGagal||[]).forEach(x=>fc[x.code]=(fc[x.code]||0)+x.n);
- logs.forEach(l=>{if(l.type==='aset'&&!l.ok&&l.live){const m=l.ket.match(/\(([^)]+)\)/);if(m)fc[m[1]]=(fc[m[1]]||0)+1}});
- const stk=Object.entries(fc).filter(([c,n])=>n>=2).sort((a,b)=>b[1]-a[1]).map(([c,n])=>{const a=A.find(x=>x.code===c);return{c,n,name:a?a.name:'Tidak terdaftar',room:a?a.home:'-'}});
- const stiker='<div class="tw"><table><thead><tr><th>Kode stiker</th><th>Barang</th><th>Ruangan</th><th>Gagal dibaca</th></tr></thead><tbody>'+(stk.length?stk.map(x=>'<tr><td><code>'+esc(x.c)+'</code></td><td>'+esc(x.name)+'</td><td>'+esc(x.room)+'</td><td><span class="bd bad">'+x.n+'×</span></td></tr>').join(''):'<tr><td colspan="4" class="empty">Tidak ada stiker bermasalah.</td></tr>')+'</tbody></table></div>';
  // S-5 kelengkapan kode stiker per gedung
  const g={};A.forEach(a=>{const k=a.room.gedung,e=g[k]||(g[k]={t:0,ok:0});e.t++;if(/^DBR-\d{4}-\d{4}$/.test(a.code||''))e.ok++});
+ const lengAll=A.length?Math.round(A.filter(a=>/^DBR-\d{4}-\d{4}$/.test(a.code||'')).length/A.length*100):0;
  const lengkap=Object.entries(g).map(([k,e])=>({label:k.replace(/\s*\(.*\)/,''),v:Math.round(e.ok/e.t*100),color:e.ok/e.t>=.9?'#16915a':e.ok/e.t>=.7?'#f0a020':'#e5484d'})).sort((a,b)=>a.v-b.v);
  return banner('Abel','Daftar pekerjaan yang perlu ditindaklanjuti hari ini.')+
  '<div class="kpis">'+kpi('📝','r','Menunggu verifikasi',pend.length,pend.length?'Terlama: '+wait(pend[0]):'Tidak ada antrean')+
   kpi('🛡️','b','Pengajuan bentrok ditolak sistem',bentrok,'bulan ini, dicegah otomatis')+
   kpi('📦','r','Barang habis / menipis',stok.length,stok.filter(x=>x.st==='habis').length+' habis hari ini')+
-  kpi('🏷️','r','Stiker bermasalah',stk.length,'perlu dicetak ulang')+'</div>'+
+  kpi('🏷️','g','Kelengkapan kode stiker',lengAll+'%','seluruh barang DBR')+'</div>'+
  '<div class="g2"><div class="card"><div class="ch"><h3>📝 Antrean Verifikasi Reservasi</h3><a href="#/reservasi">Buka Reservasi →</a></div>'+antre+'</div>'+
  '<div class="card"><div class="ch"><h3>📦 Barang Habis / Menipis</h3><a href="#/barang">Ketersediaan Barang →</a></div>'+brg+'</div></div>'+
  '<div class="card"><div class="ch"><h3>🗓️ Jadwal Ruangan 7 Hari ke Depan</h3><a href="#/ruangan">Ketersediaan Ruangan →</a></div>'+leg([['Kosong','#16915a'],['Terisi / dinonaktifkan','#e5484d'],['Akhir pekan boleh dipesan (perlu persetujuan)','#9aa3b0']])+sched+'</div>'+
- '<div class="g2"><div class="card"><div class="ch"><h3>🏷️ Stiker QR Gagal Dibaca Berulang</h3><a href="#/aset">Lokasi Aset →</a></div>'+stiker+'</div>'+
- '<div class="card"><div class="ch"><h3>✅ Kelengkapan Kode Stiker per Gedung</h3><a href="#/dbr">Kelola DBR →</a></div><p class="sub" style="margin:0 0 8px">Persentase barang DBR yang kode stikernya terisi dan berformat benar.</p>'+oHbar(lengkap,{max:100,fmt:v=>v+'%',L:110})+'</div></div>'}
+ '<div class="card"><div class="ch"><h3>✅ Kelengkapan Kode Stiker per Gedung</h3><a href="#/dbr">Kelola DBR →</a></div><p class="sub" style="margin:0 0 8px">Persentase barang DBR yang kode stikernya terisi dan berformat benar.</p>'+oHbar(lengkap,{max:100,fmt:v=>v+'%'})+'</div>'}
 
-// =====================================================================
-// DASHBOARD TIM IT
 // =====================================================================
 function oIT(){const logs=recent(allLogs()),today=sod(new Date()),P=PERIOD,from=addD(today,-(P-1)),to=addD(today,1),cur=inR(logs,from,to),prv=inR(logs,addD(from,-P),from),ex=OX();
  const c=stats(cur),p=stats(prv),days=Array.from({length:P},(_,i)=>addD(from,i)),labels=days.map(fmtD);
- // IT-1 keberhasilan + gagal per fitur
- const feats=['/cek','/reservasi','/lacak'],fr=feats.map(f=>{const s=stats(cur.filter(l=>oFeat(l)===f));return{label:f+' ('+s.n+' permintaan)',v:s.fail}});
- // IT-2 waktu respons teks vs gambar
- const per=days.map(d=>inR(cur,d,addD(d,1))),txt=fillGaps(per.map(x=>{const t=x.filter(l=>!oImg(l));return t.length?oAvgS(t):null}),0),img=fillGaps(per.map(x=>{const t=x.filter(oImg);return t.length?oAvgS(t):null}),0);
- const okT=cur.filter(l=>!oImg(l)),okI=cur.filter(oImg),tT=D.dashboard.targetMs/1000,tI=6,pT=okT.length?okT.filter(l=>l.ms/1000<=tT).length/okT.length*100:0,pI=okI.length?okI.filter(l=>l.ms/1000<=tI).length/okI.length*100:0;
- // IT-3 pembacaan foto stiker
- const exF=(ex.fotoGagal||[]).filter(x=>x.d<P),imgFail=okI.filter(l=>!l.ok),nFoto=okI.length+exF.length,okFoto=okI.length-imgFail.length,pFoto=nFoto?okFoto/nFoto*100:0;
- const gelapL=l=>Math.floor(l.t.getTime()/60000)%3===0,cause=[{label:'Buram',v:exF.filter(x=>x.c==='Buram').length+imgFail.filter(l=>!gelapL(l)).length},{label:'Gelap',v:exF.filter(x=>x.c==='Gelap').length+imgFail.filter(gelapL).length}]; // kode DBR selalu terdaftar: kegagalan hanya karena kualitas foto
+ // IT-1 keberhasilan + gagal per fitur + alasan terbanyak
+ const feats=['/cek','/reservasi','/start'],fr=feats.map(f=>{const s=stats(cur.filter(l=>oFeat(l)===f));return{label:f+' ('+s.n+' permintaan)',v:s.fail}});
+ const why={};cur.filter(l=>!l.ok).forEach(l=>{const k=l.ket.replace(/\s*\(.*\)\s*$/,'');why[k]=(why[k]||0)+1});
+ const whyRows=Object.entries(why).sort((a,b)=>b[1]-a[1]).slice(0,4);
+ // IT-2 waktu respons
+ const tT=D.dashboard.targetMs/1000,per=days.map(d=>inR(cur,d,addD(d,1))),txt=fillGaps(per.map(x=>x.length?oAvgS(x):null),0),pT=cur.length?cur.filter(l=>l.ms/1000<=tT).length/cur.length*100:0,pTp=prv.length?prv.filter(l=>l.ms/1000<=tT).length/prv.length*100:0;
  // IT-4 formulir tanpa koreksi (simulasi)
  const ft=ex.formTanpaKoreksi||[],wl=ft.map((_,i)=>fmtD(addD(today,-7*(ft.length-1-i))));
  // IT-5 sinkronisasi
@@ -87,26 +77,24 @@ function oIT(){const logs=recent(allLogs()),today=sod(new Date()),P=PERIOD,from=
  // IT-6 biaya Gemini (simulasi)
  const gw=ex.geminiBiayaMingguan||[],lim=ex.geminiBatasBulanan||250000,bulan=gw.slice(-4).reduce((a,b)=>a+b,0),gl=gw.map((_,i)=>i===gw.length-1?'Minggu ini':'M-'+(gw.length-1-i));
  const mxC=Math.ceil(Math.max(...gw,lim/4)/20000)*20000;
- const lastTxt=txt.length?dec(txt[txt.length-1]):'-',lastImg=img.length?dec(img[img.length-1]):'-';
  const kpis='<div class="kpis">'+kpi('✔','g','Permintaan berhasil (IT-1)',Math.round(c.rate)+'%',delta(c.rate-p.rate,true,'%',' dari periode sebelumnya'))+
-  kpi('📷','b','Foto stiker terbaca (IT-3)',Math.round(pFoto)+'%',okFoto+' dari '+nFoto+' foto')+
+  kpi('⚡','b','Respons ≤ '+tT+' detik (IT-2)',Math.round(pT)+'%',delta(pT-pTp,true,'%',' dari periode sebelumnya'))+
   kpi('📝','b','Formulir tanpa koreksi (IT-4)',(ft.length?ft[ft.length-1]:0)+'%',ft.length>1?delta(ft[ft.length-1]-ft[ft.length-2],true,'%',' dari minggu lalu')+' '+SIM:SIM)+
   '<div class="card kpi"><div class="ico '+(online?'g':'r')+'">'+(online?'🟢':'🔴')+'</div><div><div class="l">Terakhir sinkron (IT-5)</div><div class="v" style="font-size:20px">'+(last?fmtT(last):'-')+'</div><div class="d"><span class="bd '+(online?'ok':'bad')+'">'+(online?'Terhubung':'Terputus')+'</span> &nbsp;Gagal: <b class="'+(fail?'red':'grn')+'">'+fail+'</b></div></div></div></div>';
- const cResp='<div class="card"><div class="ch"><h3>Waktu Respons: Teks vs Gambar</h3>'+periodSel()+'</div>'+leg([['Teks (target ≤ '+tT+' dtk)','#e5484d'],['Gambar (target ≤ '+tI+' dtk)','#2a6fdb']])+
-  lineChart({labels,min:0,max:8,ticks:[0,2,4,6,8],fmt:(v,x)=>dec(v,x?1:0)+' dtk',targets:[{v:tT,color:'#e5484d'},{v:tI,color:'#2a6fdb'}],series:[{name:'Teks',color:'#e5484d',vals:txt},{name:'Gambar',color:'#2a6fdb',vals:img}]})+
-  '<p class="sub" style="margin:4px 0 0">Hari ini: teks <b>'+lastTxt+' dtk</b>, gambar <b>'+lastImg+' dtk</b>. Memenuhi target: teks <b>'+Math.round(pT)+'%</b>, gambar <b>'+Math.round(pI)+'%</b>.</p></div>';
+ const cResp='<div class="card"><div class="ch"><h3>Waktu Respons Chatbot</h3>'+periodSel()+'</div>'+leg([['Rata-rata waktu respons','#e5484d'],['Target ≤ '+tT+' detik','#2a6fdb']])+
+  lineChart({labels,min:0,max:5,ticks:[0,1,2,3,4,5],fmt:(v,x)=>dec(v,x?1:0)+' dtk',target:tT,series:[{name:'Waktu respons',color:'#e5484d',vals:txt}]})+
+  '<p class="sub" style="margin:4px 0 0">Hari ini rata-rata <b>'+dec(txt[txt.length-1])+' dtk</b>. Permintaan yang memenuhi target: <b>'+Math.round(pT)+'%</b>.</p></div>';
  const cForm='<div class="card"><div class="ch"><h3>Tren Formulir Tanpa Koreksi (NLP) '+SIM+'</h3></div><div class="leg"><span><i style="background:#16915a"></i>% formulir terisi benar tanpa koreksi pengguna</span></div>'+lineChart({labels:wl,min:0,max:100,ticks:[0,25,50,75,100],fmt:v=>Math.round(v)+'%',series:[{name:'Formulir tanpa koreksi',color:'#16915a',vals:ft,area:true,end:(ft[ft.length-1]||0)+'%'}]})+
   '<p class="sub" style="margin:4px 0 0">Naik <b>'+((ft[ft.length-1]||0)-(ft[0]||0))+' poin</b> dalam '+ft.length+' minggu terakhir.</p></div>';
- const cFail='<div class="card"><div class="ch"><h3>Permintaan Gagal per Fitur</h3>'+periodSel()+'</div><p class="sub" style="margin:0 0 6px">Dari '+num(c.n)+' permintaan, '+Math.round(c.rate)+'% berhasil.</p>'+oHbar(fr,{L:170,max:Math.max(5,...fr.map(x=>x.v))})+'</div>';
- const cCause='<div class="card"><div class="ch"><h3>Penyebab Foto Stiker Gagal Dibaca '+SIM+'</h3></div><p class="sub" style="margin:0 0 6px">Kode stiker DBR selalu terdaftar, jadi foto gagal hanya karena buram atau gelap. Gemini Vision belum tersambung, pemisahan ini simulasi.</p>'+oHbar(cause,{L:170,max:Math.max(3,...cause.map(x=>x.v)),color:'#f0a020'})+'</div>';
+ const cFail='<div class="card"><div class="ch"><h3>Permintaan Tidak Terproses per Fitur</h3>'+periodSel()+'</div><p class="sub" style="margin:0 0 6px">Chatbot tidak memahami atau tidak bisa memenuhi permintaan (bukan gangguan internet). Dari '+num(c.n)+' permintaan, '+Math.round(c.rate)+'% berhasil.</p>'+oHbar(fr,{max:Math.max(5,...fr.map(x=>x.v))})+
+  '<div class="sub" style="margin:12px 0 4px"><b>Alasan terbanyak</b></div><ul class="chk">'+(whyRows.length?whyRows.map(w=>'<li>'+esc(w[0])+' <b>('+w[1]+')</b></li>').join(''):'<li>Tidak ada kegagalan pada periode ini.</li>')+'</ul></div>';
  const cCost='<div class="card"><div class="ch"><h3>Biaya Gemini API per Minggu '+SIM+'</h3><span class="bd '+(bulan>lim?'bad':'ok')+'">'+rp(bulan)+' / '+rp(lim)+' ('+Math.round(bulan/lim*100)+'%)</span></div>'+
-  oVbars({labels:gl,max:mxC,ticks:[0,.25,.5,.75,1].map(x=>Math.round(mxC*x)),fmt:v=>v>=1000?Math.round(v/1000)+'rb':v,series:[{name:'Biaya mingguan',color:'#2a6fdb',vals:gw,colors:gw.map(v=>v>lim/4?'#e5484d':'#2a6fdb')}],limit:lim/4,limitLabel:'Batas '+rp(lim/4)+'/minggu',w:900,h:230})+
+  oVbars({labels:gl,max:mxC,ticks:[0,.25,.5,.75,1].map(x=>Math.round(mxC*x)),fmt:v=>v>=1000?Math.round(v/1000)+'rb':v,series:[{name:'Biaya mingguan',color:'#2a6fdb',vals:gw,colors:gw.map(v=>v>lim/4?'#e5484d':'#2a6fdb')}],limit:lim/4,limitLabel:'Batas '+rp(lim/4)+'/minggu',w:520,h:270})+
   '<p class="sub" style="margin:4px 0 0">Garis merah: batas Rp250.000/bulan (≈ '+rp(lim/4)+' per minggu).</p></div>';
  return banner('Bruno','Kesehatan sistem: apakah chatbot cepat, akurat, dan tersambung ke data UMPER.')+kpis+
  '<div class="g2">'+cResp+cForm+'</div>'+
- '<div class="g2">'+cFail+cCause+'</div>'+
- cCost+
- '<div class="note pg"><span>ℹ️ Data bertanda <b>simulasi</b> belum bisa diukur oleh prototype ini (Gemini Vision, NLP formulir, biaya API). Sisanya dihitung dari log chatbot dan sinkronisasi Firebase.</span></div>'}
+ '<div class="g2">'+cFail+cCost+'</div>'+
+ '<div class="note pg"><span>ℹ️ Data bertanda <b>simulasi</b> belum bisa diukur oleh prototype ini (NLP formulir, biaya API). Sisanya dihitung dari log chatbot dan sinkronisasi Firebase.</span></div>'}
 
 // =====================================================================
 // DASHBOARD PIMPINAN
@@ -132,14 +120,12 @@ function oPim(){const logs=recent(allLogs()),today=sod(new Date()),ex=OX(),N=14,
  const cnt={};(ex.barangTidakTersedia||[]).forEach(x=>cnt[x.label]=(cnt[x.label]||0)+x.v);
  logs.forEach(l=>{if(l.live&&l.type==='barang'){const m=l.ket.match(/^(.+?) tidak tersedia/);if(m)cnt[m[1]]=(cnt[m[1]]||0)+1}});
  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([label,v])=>({label,v}));
- // P-6 pelacakan aset
- const trk=cur.filter(l=>oFeat(l)==='/lacak'),trp=prv.filter(l=>oFeat(l)==='/lacak');
  const lastMS=ver.length?'':' '+SIM;
  return banner('Pimpinan','Ringkasan evaluasi dampak sistem terhadap layanan UMPER.')+
  '<div class="kpis">'+kpi('🌙','b','Permintaan di luar jam layanan (P-2)',Math.round(pOut(cur))+'%',delta(pOut(cur)-pOut(prv),true,'%',' dari '+N+' hari sebelumnya'))+
   kpi('🛡️','g','Jadwal bentrok bulan ini (P-3)',clash,'<b class="up">'+dicegah+'</b> bentrok berhasil dicegah')+
-  kpi('📍','r','Jumlah pelacakan (P-6)',num(trk.length),delta(oPct(trk.length,trp.length),true,'%',' dari '+N+' hari sebelumnya'))+
-  kpi('✔','g','Pelacakan berhasil (P-6)',Math.round(oRate(trk))+'%',delta(oRate(trk)-oRate(trp),true,'%',' dari '+N+' hari sebelumnya'))+'</div>'+
+  kpi('💬','g','Reservasi via chatbot (P-1)',share[5]+'%','bulan lalu '+share[4]+'%')+
+  kpi('⏱️','r','Waktu verifikasi (P-4)',dec(wv[wv.length-1])+' jam','sebelum sistem '+base+' jam')+'</div>'+
  '<div class="g2"><div class="card"><div class="ch"><h3>Reservasi: Chatbot vs Input Manual (P-1)</h3></div>'+leg([['Via chatbot','#16915a'],['Input manual','#9aa3b0']])+
   oVbars({labels:months.map(m=>m.l),max:Math.max(10,Math.ceil(Math.max(...mv.map(x=>Math.max(x.c,x.m)))/10)*10),ticks:(()=>{const mx=Math.max(10,Math.ceil(Math.max(...mv.map(x=>Math.max(x.c,x.m)))/10)*10);return[0,1,2,3,4].map(i=>i*mx/4)})(),vals:true,series:[{name:'Via chatbot',color:'#16915a',vals:mv.map(x=>x.c)},{name:'Input manual',color:'#9aa3b0',vals:mv.map(x=>x.m)}]})+
   '<p class="sub" style="margin:4px 0 0">Porsi chatbot bulan ini <b>'+share[5]+'%</b> (bulan lalu '+share[4]+'%). Bulan berjalan masih parsial. Riwayat Jun–Okt '+SIM+'</p></div>'+

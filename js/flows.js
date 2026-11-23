@@ -1,6 +1,6 @@
-// Alur percakapan bot: /start, /cek, /reservasi, /kode, /lacak.
+// Alur percakapan bot: /start, /cek, /reservasi.
 // ---------- FLOWS ----------
-const MENU=()=>bot('Selamat datang di layanan SiUMPER!\nGunakan:\n\n'+B('/Cek')+' untuk melihat ketersediaan ruangan dan barang,\n'+B('/Reservasi')+' untuk peminjaman ruangan dan barang\n'+B('/Lacak')+' untuk melacak lokasi barang lewat foto stiker DBR');
+const MENU=()=>bot('Selamat datang di layanan SiUMPER!\nGunakan:\n\n'+B('/Cek')+' untuk melihat ketersediaan ruangan dan barang,\n'+B('/Reservasi')+' untuk peminjaman ruangan dan barang');
 function start(){S={st:'idle'};setState('idle');MENU()}
 function cek(){S.pre=null;S.preR=null;setState('idle');bot(B('Informasi ruangan dan barang')+'\n\n'+B('/Ruangan')+' - Untuk cek kesediaan ruangan\n'+B('/Barang')+' - Untuk cek kesediaan barang',[['/Ruangan',ruangan],['/Barang',barang]])}
 function ruangan(){S.pre=null;S.preR=null;S.flow='cek';bot('Silahkan pilih gedung yang kamu mau cek.',BUILDINGS.map(b=>[b,()=>{S.bld=b;askRoom()}]))}
@@ -76,23 +76,3 @@ async function doSPJ(spjName,sikName){setState('wait','');
   if(r&&r.status==='Disetujui'){add('day','Hari berikutnya');const where=kind==='room'?rl(x.room):STOCK[x.item].n+' x'+x.qty+'\nAmbil di: '+HOME[x.item];
    bot('✅ '+B('SPJ dan SIK valid')+'\n\nReservasi disetujui.\nNo. Transaksi: '+rec.id+'\nPeminjaman:\n'+where+'\nTanggal:\n'+x.date.txt+'\n\nStatus: '+B('DISETUJUI'),null,0)}
   else bot('❌ '+B('Reservasi tidak disetujui')+'\n\nNo. Transaksi: '+rec.id+'\nSilakan hubungi Admin UMPER atau ajukan ulang dengan /reservasi.',null,0)},1000)}
-// Lacak
-function lacak(){setState('foto','Unggah foto stiker DBR lewat tombol 📎');bot('🔎 '+B('Pelacakan Barang')+'\n\nKirim foto stiker DBR pada barang (pastikan kode terlihat jelas). Kami akan menunjukkan lokasi yang seharusnya.\n\nTip: tekan tombol di bawah untuk mencoba dengan foto contoh.',[['📷 Pakai foto contoh',()=>{const it=ITEMS[Math.floor(Math.random()*ITEMS.length)];readCode(null,it.code)}]])}
-function sticker(code){const c=document.createElement('canvas');c.width=300;c.height=130;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,300,130);g.strokeStyle='#222';g.lineWidth=4;g.strokeRect(6,6,288,118);g.fillStyle='#111';g.font='bold 22px sans-serif';g.fillText('DBR – Daftar Barang Ruangan',18,40);g.font='bold 26px monospace';g.fillText(code,18,85);g.font='13px sans-serif';g.fillText('Barang Kampus',18,112);return c.toDataURL()}
-function readCode(img,code){me('📷 '+(img?'foto stiker':'foto contoh'));add('me','<img src="'+(img||sticker(code))+'" alt="foto stiker">');
- setState('foto','');
- if(!code){S.pending=true;setState('code','Ketik kode pada stiker, mis. DBR-2026-0101');return bot('📸 Foto diterima. Pembacaan otomatis (OCR) belum tersambung di prototype ini — ketik kode yang tertera pada stiker, atau pilih:',ITEMS.slice(0,4).map(i=>[i.code,()=>found(i.code)]))}
- bot('🔍 Membaca stiker...\nKode terbaca: '+B(code),null,500).then(()=>found(code))}
-function found(code){code=code.toUpperCase().replace(/\s/g,'');const it=ITEMS.find(i=>i.code===code);
- if(!it){setState('code','Ketik kode pada stiker');return bot('❌ Kode '+B(code)+' tidak ada di data. Periksa kembali atau ketik ulang kodenya.')}
- S.item=it;setState('where','Ketik lokasi tempat barang ditemukan, mis. Ruang 4 Gedung C');bot('📦 '+B('Barang ditemukan')+'\n\nKode: '+it.code+'\nNama: '+it.name+(it.kode?'\nKode Barang: '+it.kode:'')+(it.roomNo?'\nKondisi: '+(it.ket||'belum diisi'):'')+'\n📍 Lokasi seharusnya: '+B(it.home)+'\n\nDi mana kamu menemukan barang ini sekarang?\nSilakan ketik lokasinya, mis. "'+(it.roomName||'Ruang 4 Gedung C')+'".')}
-function doWhere(t){const it=S.item;if(!it)return start();
- if(it.roomNo){setState('idle','');if(dbrMatch(it,t))return bot('✅ '+B('Lokasi sudah sesuai')+'\n\n'+it.name+' ('+it.code+') berada di lokasi yang benar:\n📍 '+B(it.home)+'\n\nGunakan /lacak untuk melacak barang lain.',[['/Lacak',lacak]]);
-  return bot('⚠️ '+B('Barang tidak pada tempatnya')+'\n\n'+it.name+' ('+it.code+') ditemukan di "'+esc(t.trim())+'".\nSeharusnya berada di:\n📍 '+B(it.home)+'\n\nMohon kembalikan ke lokasi tersebut. Laporan sudah dicatat untuk Admin.\n\nGunakan /lacak untuk melacak barang lain.',[['/Lacak',lacak]])}
- const home=ROOMS.find(r=>it.home===rl(r)||it.home===r.r),r=findRoom(t),q=t.toLowerCase();
- if(!r){const hb=home.b.toLowerCase().replace('gedung ','').split(/[()]/).map(x=>x.trim()).filter(Boolean);
-  if(hb.some(k=>q.includes(k)))return bot('📍 Gedungnya terbaca ('+home.b+'), tapi nama ruangannya belum disebut. Mohon ketik lokasi lengkap, mis. "'+home.r+' '+home.b+'".')}
- setState('idle','');
- if(r&&r===home)return bot('✅ '+B('Lokasi sudah sesuai')+'\n\n'+it.name+' ('+it.code+') berada di lokasi yang benar:\n📍 '+B(it.home)+'\n\nGunakan /lacak untuk melacak barang lain.',[['/Lacak',lacak]]);
- const where=r?(r.b===r.r?r.r:r.b+' - '+r.r):'"'+t.trim()+'"';
- bot('⚠️ '+B('Barang tidak pada tempatnya')+'\n\n'+it.name+' ('+it.code+') ditemukan di '+where+'.\nSeharusnya berada di:\n📍 '+B(it.home)+'\n\nMohon kembalikan ke lokasi tersebut. Laporan sudah dicatat untuk Admin.\n\nGunakan /lacak untuk melacak barang lain.',[['/Lacak',lacak]])}

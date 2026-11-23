@@ -4,8 +4,8 @@ const K_LOG='siumper-log',K_BOOK='siumper-bookings',K_REP='siumper-reports',K_RO
 const MS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const MF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const DAYS=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-const TYPES={barang:'Ketersediaan barang',ruangan:'Ketersediaan ruangan',aset:'Lokasi aset (DBR)',lainnya:'Lainnya'};
-const TCOL={barang:'#e5484d',ruangan:'#2a6fdb',aset:'#16915a',lainnya:'#9aa3b0'};
+const TYPES={barang:'Ketersediaan barang',ruangan:'Ketersediaan ruangan',lainnya:'Lainnya'};
+const TCOL={barang:'#e5484d',ruangan:'#2a6fdb',lainnya:'#9aa3b0'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -41,7 +41,7 @@ function allLogs(){
  const base=sod(new Date()),now=new Date();
  const seed=D.dashboard.seedLogs.map(l=>{const t=addD(base,-l.d);t.setMinutes(l.m);return{t,type:l.type,ok:l.ok,ms:l.ms,ket:l.ket}});
  const live=rd(K_LOG,[]).map(l=>({t:new Date(l.t),type:l.type,ok:l.ok,ms:l.ms,ket:l.ket,live:true}));
- return seed.concat(live).sort((a,b)=>b.t-a.t)}
+ return seed.concat(live).filter(l=>l.type!=='aset').sort((a,b)=>b.t-a.t)} // fitur /lacak dihapus
 const recent=ls=>{const n=new Date();return ls.filter(l=>l.t<=n)};
 const inR=(ls,a,b)=>ls.filter(l=>l.t>=a&&l.t<b);
 function stats(ls){const n=ls.length,ok=ls.filter(l=>l.ok).length;return{n,ok,fail:n-ok,rate:n?ok/n*100:0,ms:n?ls.reduce((a,l)=>a+l.ms,0)/n:0}}
@@ -77,7 +77,7 @@ const banner=(name,sub)=>'<div class="ban"><h1>Selamat Datang, '+name+'!</h1><p>
 const typeBadge=l=>'<span class="bd '+(l.ok?'ok':'bad')+'">'+(l.ok?'Berhasil':'Gagal')+'</span>';
 function logTable(ls,n){return '<div class="tw"><table><thead><tr><th>Waktu</th><th>Jenis Permintaan</th><th>Status</th><th>Keterangan</th></tr></thead><tbody>'+ls.slice(0,n).map(l=>'<tr><td>'+fmtT(l.t)+(l.live?' <span class="live" title="dari chatbot"></span>':'')+'</td><td>'+TYPES[l.type]+'</td><td>'+typeBadge(l)+'</td><td>'+esc(l.ket)+'</td></tr>').join('')+'</tbody></table></div>'}
 const periodSel=()=>'<select data-period>'+[7,14].map(p=>'<option value="'+p+'"'+(p===PERIOD?' selected':'')+'>'+p+' hari terakhir</option>').join('')+'</select>';
-function integ(){const a=D.dashboard.assets;return[['Inventaris barang',Object.keys(D.stock).length,'jenis barang'],['Jadwal ruangan',RM().length,'ruangan'],['Lokasi aset (DBR)',a.length,'aset']]}
+function integ(){const a=D.dashboard.assets;return[['Inventaris barang',Object.keys(D.stock).length,'jenis barang'],['Jadwal ruangan',RM().length,'ruangan'],['Daftar barang ruangan (DBR)',a.length,'aset']]}
 function integCard(){const t=SYNC?SYNC.getDate()+' '+MF[SYNC.getMonth()]+' '+SYNC.getFullYear()+', '+pad(SYNC.getHours())+':'+pad(SYNC.getMinutes()):'-';
  return '<div class="card"><div class="ch"><h3>🗄️ Status Integrasi Data</h3><a href="#/integrasi">Lihat detail →</a></div><div class="stat"><div class="dbi">🛢️</div><div><span class="bd '+(SRC_OK?'ok':'bad')+'">'+(SRC_OK?'Terhubung':'Terputus')+'</span><div style="margin-top:6px;font-size:12px">Terakhir sinkron<br><b style="font-size:13.5px">'+t+'</b></div></div></div><ul class="chk">'+integ().map(x=>'<li>'+x[0]+'</li>').join('')+'</ul><div class="note">ℹ️ Data diperbarui secara otomatis sesuai jadwal sistem.</div></div>'}
 
@@ -116,13 +116,13 @@ function logPage(){const logs=recent(allLogs()).filter(l=>(!LOGF.t||l.type===LOG
  return '<h2 class="ph">Log Chatbot</h2><p class="sub">Seluruh permintaan yang diterima chatbot. Menampilkan 200 terbaru dari '+num(logs.length)+' hasil.</p>'+
  '<div class="tools"><select data-lf="t"><option value="">Semua jenis</option>'+Object.entries(TYPES).map(([k,v])=>'<option value="'+k+'"'+(LOGF.t===k?' selected':'')+'>'+v+'</option>').join('')+'</select><select data-lf="s"><option value="">Semua status</option><option value="true"'+(LOGF.s==='true'?' selected':'')+'>Berhasil</option><option value="false"'+(LOGF.s==='false'?' selected':'')+'>Gagal</option></select><input data-lf="q" placeholder="Cari keterangan…" value="'+esc(LOGF.q)+'"><button class="btn sec2" data-act="csvlog">Unduh CSV</button></div><div class="card">'+logTable(logs,200)+'</div>'}
 function integPage(){return '<h2 class="ph">Integrasi Data</h2><p class="sub">Sumber: <code>'+esc(DATA_URL)+'</code> (ganti ke endpoint API saat database siap).</p><div class="g3e">'+integ().map(x=>'<div class="card"><h3>'+x[0]+'</h3><div class="kpi" style="margin-top:8px"><div class="v">'+num(x[1])+'</div><div class="d">'+x[2]+'</div></div><span class="bd '+(SRC_OK?'ok':'bad')+'">'+(SRC_OK?'Terhubung':'Terputus')+'</span></div>').join('')+'</div>'+
- '<div class="card"><h3>Sinkronisasi</h3><p>Terakhir sinkron: <b>'+(SYNC?fmtT(SYNC)+' '+SYNC.getFullYear():'-')+'</b></p><p>Booking tersimpan dari chatbot: <b>'+rd(K_BOOK,[]).length+'</b> &nbsp; Laporan lokasi aset: <b>'+rd(K_REP,[]).length+'</b> &nbsp; Log live: <b>'+rd(K_LOG,[]).length+'</b></p><button class="btn" data-act="resync">Sinkronkan sekarang</button></div>'}
+ '<div class="card"><h3>Sinkronisasi</h3><p>Terakhir sinkron: <b>'+(SYNC?fmtT(SYNC)+' '+SYNC.getFullYear():'-')+'</b></p><p>Booking tersimpan dari chatbot: <b>'+rd(K_BOOK,[]).length+'</b> &nbsp; Log live: <b>'+rd(K_LOG,[]).length+'</b></p><button class="btn" data-act="resync">Sinkronkan sekarang</button></div>'}
 function perfPage(){const logs=allLogs(),from=addD(sod(new Date()),-(PERIOD-1)),cur=inR(logs,from,addD(sod(new Date()),1)),ms=cur.map(l=>l.ms).sort((a,b)=>a-b),q=p=>ms.length?ms[Math.min(ms.length-1,Math.floor(p*ms.length))]/1000:0;
  const byH=Array(24).fill(0);cur.forEach(l=>byH[l.t.getHours()]++);const mxH=Math.max(1,...byH);
  return '<h2 class="ph">Performa Sistem</h2><p class="sub">Periode: '+periodSel()+'</p><div class="kpis">'+kpi('⚡','b','Median respons',dec(q(.5))+' dtk','')+kpi('📈','r','Persentil 95',dec(q(.95))+' dtk','')+kpi('🐢','r','Terlama',dec(q(1))+' dtk','')+kpi('✔','g','Target ≤ '+D.dashboard.targetMs/1000+' dtk',Math.round(ms.length?ms.filter(x=>x<=D.dashboard.targetMs).length/ms.length*100:0)+'%','permintaan memenuhi target')+'</div>'+
  '<div class="g2"><div class="card"><h3>Permintaan per jam</h3><svg viewBox="0 0 560 190" width="100%">'+byH.map((v,h)=>{const bh=v/mxH*140;return '<rect x="'+(h*23+6)+'" y="'+(155-bh)+'" width="17" height="'+bh+'" fill="#2a6fdb"><title>'+pad(h)+'.00: '+v+'</title></rect>'+(h%3===0?'<text x="'+(h*23+14)+'" y="175" font-size="10" fill="#6b7686" text-anchor="middle">'+pad(h)+'</text>':'')}).join('')+'</svg></div>'+
  '<div class="card"><h3>Kegagalan per jenis</h3><div class="tw"><table><thead><tr><th>Jenis</th><th>Total</th><th>Gagal</th><th>Keberhasilan</th></tr></thead><tbody>'+Object.entries(TYPES).map(([k,v])=>{const s=stats(cur.filter(l=>l.type===k));return '<tr><td>'+v+'</td><td>'+s.n+'</td><td>'+s.fail+'</td><td>'+dec(s.rate)+'%</td></tr>'}).join('')+'</tbody></table></div></div></div>'}
-function settingsPage(){return '<h2 class="ph">Pengaturan</h2><div class="card"><h3>Data &amp; log lokal</h3><p>Log live, booking, dan laporan lokasi dari chatbot disimpan di localStorage browser ini.</p><button class="btn sec2" data-act="clr">Hapus log live</button> <button class="btn sec2" data-act="clrb">Reset booking dari chatbot</button> <button class="btn sec2" data-act="clrr">Hapus laporan lokasi</button> <button class="btn sec2" data-act="clrd">Reset DBR ke data.json</button></div><div class="card"><h3>Sumber data</h3><p><code>'+esc(DATA_URL)+'</code> – ubah konstanta <code>DATA_URL</code> di <code>dashboard/js/dash.js</code> (dan <code>DATA_URL</code> di <code>js/data.js</code>) ke endpoint API.</p></div>'}
+function settingsPage(){return '<h2 class="ph">Pengaturan</h2><div class="card"><h3>Data &amp; log lokal</h3><p>Log live, booking, dan laporan lokasi dari chatbot disimpan di localStorage browser ini.</p><button class="btn sec2" data-act="clr">Hapus log live</button> <button class="btn sec2" data-act="clrb">Reset booking dari chatbot</button> <button class="btn sec2" data-act="clrd">Reset DBR ke data.json</button></div><div class="card"><h3>Sumber data</h3><p><code>'+esc(DATA_URL)+'</code> – ubah konstanta <code>DATA_URL</code> di <code>dashboard/js/dash.js</code> (dan <code>DATA_URL</code> di <code>js/data.js</code>) ke endpoint API.</p></div>'}
 
 // ---------- halaman: Staf UMPER ----------
 function stHome(){const today=isoL(new Date()),A=assets(),stockK=Object.keys(D.stock);
@@ -150,18 +150,15 @@ function blockCard(kind){const opts=kind==='room'?RM().map(r=>[rl(r).toLowerCase
 const dateTool=()=>'<div class="tools"><label>Tanggal: <input type="date" data-date value="'+DSEL+'"></label></div>';
 function barangPage(){const A=assets();return '<h2 class="ph">Ketersediaan Barang</h2><p class="sub">Stok total, jumlah tersedia, dan kondisi barang pada tanggal terpilih.</p>'+dateTool()+'<div class="tw"><table><thead><tr><th>Barang</th><th>Stok total</th><th>Dipinjam</th><th>Tersedia</th><th>Kondisi</th><th>Lokasi simpan</th><th>Status</th></tr></thead><tbody>'+Object.entries(D.stock).map(([k,s])=>{const f=itemFree(k,DSEL);return '<tr><td>'+s.n+'</td><td>'+s.total+'</td><td>'+(s.total-f)+'</td><td>'+f+'</td><td>'+s.cond+'</td><td>'+esc(D.home[k]||'-')+'</td><td><span class="bd '+(f>0?'ok':'bad')+'">'+(f>0?'Tersedia':isBlk('item',k,DSEL)?'Dinonaktifkan admin':'Tidak tersedia')+'</span></td></tr>'}).join('')+'</tbody></table></div>'+blockCard('item')}
 function ruanganPage(){return '<h2 class="ph">Ketersediaan Ruangan</h2><p class="sub">Status ruangan berdasarkan tanggal dan jam layanan.</p>'+dateTool()+'<div class="tw"><table><thead><tr><th>Gedung</th><th>Ruangan</th><th>Lantai</th><th>Status</th><th>Jam tersedia</th><th>Keterangan</th></tr></thead><tbody>'+RM().map(r=>{const w=roomWin(r,DSEL);const why=!roomFree(r,DSEL)?(isBlk('room',rl(r).toLowerCase(),DSEL)?'Dinonaktifkan admin UMPER':'Sudah dipesan'):dow(DSEL)===0||dow(DSEL)===6?'Akhir pekan: perlu persetujuan Staf UMPER':'';return '<tr><td>'+esc(r.b)+'</td><td>'+esc(r.r)+'</td><td>'+r.f+'</td><td><span class="bd '+(w?'ok':'bad')+'">'+(w?'Tersedia':'Tidak tersedia')+'</span></td><td>'+(w?hh(w[0])+' - '+hh(w[1])+' WIB':'-')+'</td><td>'+why+'</td></tr>'}).join('')+'</tbody></table></div>'+blockCard('room')}
-let AF='';
-function asetPage(){const A=assets().filter(a=>!AF||a.st===AF);const lab={sesuai:['ok','Sesuai'],tidak:['bad','Tidak sesuai'],belum:['gr','Belum tercatat']};
- return '<h2 class="ph">Lokasi Asset (DBR)</h2><p class="sub">Lokasi resmi menurut DBR dibandingkan laporan terakhir dari chatbot /lacak.</p><div class="tools"><select data-af><option value="">Semua status</option>'+Object.entries(lab).map(([k,v])=>'<option value="'+k+'"'+(AF===k?' selected':'')+'>'+v[1]+'</option>').join('')+'</select></div><div class="tw"><table><thead><tr><th>Kode</th><th>Nama barang</th><th>Lokasi resmi (DBR)</th><th>Terakhir terlihat</th><th>Status</th></tr></thead><tbody>'+A.map(a=>'<tr><td>'+a.code+'</td><td>'+esc(a.name)+'</td><td>'+esc(a.home||'-')+'</td><td>'+esc(a.seen||'-')+'</td><td><span class="bd '+lab[a.st][0]+'">'+lab[a.st][1]+'</span></td></tr>').join('')+'</tbody></table></div>'}
 function dbrPage(){const A=assets(),g={};A.filter(a=>a.home).forEach(a=>(g[a.home]=g[a.home]||[]).push(a));
  return '<h2 class="ph">Daftar Barang Ruangan (DBR)</h2><p class="sub">Barang yang seharusnya berada di setiap ruangan.</p><div class="g2">'+Object.entries(g).sort().map(([h,l])=>'<div class="card"><h3>'+esc(h)+' <span class="bd gr">'+l.length+'</span></h3><div class="tw" style="margin-top:8px"><table><tbody>'+l.map(a=>'<tr><td>'+a.code+'</td><td>'+esc(a.name)+'</td><td>'+(a.st==='tidak'?'<span class="bd bad">Tidak sesuai</span>':'<span class="bd ok">Sesuai</span>')+'</td></tr>').join('')+'</tbody></table></div></div>').join('')+'</div>'}
 function rekapPage(){const A=assets(),rec=A.filter(a=>a.lengkap).length;
  return '<h2 class="ph">Rekapitulasi &amp; Laporan</h2><div class="kpis">'+kpi('📦','r','Jenis barang',Object.keys(D.stock).length,'')+kpi('🗓️','r','Ruangan terdaftar',RM().length,'')+kpi('📍','r','Aset tercatat',A.length,'')+kpi('✅','g','Kelengkapan data',Math.round(rec/A.length*100)+'%','')+'</div><div class="card"><h3>Unduh laporan</h3><p>Unduh data dalam format CSV (dapat dibuka di Excel).</p><button class="btn" data-act="csvaset">Aset &amp; lokasi</button> <button class="btn" data-act="csvstok">Stok barang</button> <button class="btn" data-act="csvlog">Log chatbot</button></div>'}
 
 // ---------- router ----------
-const NAV={it:[['beranda','🏠','Beranda'],['log','💬','Log Chatbot'],['aset','📍','Lokasi Aset (DBR)'],['integrasi','🔗','Integrasi Data'],['performa','📊','Performa Sistem'],['pengaturan','⚙️','Pengaturan']],
+const NAV={it:[['beranda','🏠','Beranda'],['log','💬','Log Chatbot'],['integrasi','🔗','Integrasi Data'],['performa','📊','Performa Sistem'],['pengaturan','⚙️','Pengaturan']],
  staff:[['beranda','🏠','Beranda'],['barang','📦','Ketersediaan Barang'],['ruangan','🗓️','Ketersediaan Ruangan'],['reservasi','📝','Reservasi'],['dbr','📋','Daftar Barang Ruangan (DBR)'],['rekap','🧾','Rekapitulasi & Laporan'],['pengaturan','⚙️','Pengaturan']]};
-const PAGES={it:{beranda:itHome,log:logPage,aset:()=>asetPage(),integrasi:integPage,performa:perfPage,pengaturan:settingsPage},staff:{beranda:stHome,barang:barangPage,ruangan:ruanganPage,aset:asetPage,dbr:dbrPage,rekap:rekapPage,pengaturan:settingsPage}};
+const PAGES={it:{beranda:itHome,log:logPage,integrasi:integPage,performa:perfPage,pengaturan:settingsPage},staff:{beranda:stHome,barang:barangPage,ruangan:ruanganPage,dbr:dbrPage,rekap:rekapPage,pengaturan:settingsPage}};
 const cur=()=>{const p=(location.hash.replace('#/','')||'beranda').split('/')[0];return PAGES[ROLE][p]?p:'beranda'};
 function render(){if(!D)return;sync();const p=cur();
  $('#uname').textContent=({it:'Bruno',staff:'Abel',pimpinan:'Pimpinan'})[ROLE]||'Abel';$('#urole').textContent=({it:'Tim IT',staff:'Staf UMPER',pimpinan:'Kepala UMPER'})[ROLE]||'Staf UMPER';
@@ -169,7 +166,7 @@ function render(){if(!D)return;sync();const p=cur();
  $('#umenu').innerHTML='<div class="h">Tampilkan sebagai</div><button data-role="it" class="'+(ROLE==='it'?'on':'')+'">Tim IT – Bruno</button><button data-role="staff" class="'+(ROLE==='staff'?'on':'')+'">Staf UMPER – Abel</button><button data-role="pimpinan" class="'+(ROLE==='pimpinan'?'on':'')+'">Pimpinan – Kepala UMPER</button>';
  $('#today').textContent=fmtFull(new Date());
  const y=window.scrollY;$('#pg').innerHTML=PAGES[ROLE][p]();window.scrollTo(0,y);sig=signature()}
-const signature=()=>BLK().length+'|'+rd(K_LOG,[]).length+'|'+rd(K_BOOK,[]).length+'|'+rd(K_REP,[]).length;
+const signature=()=>BLK().length+'|'+rd(K_LOG,[]).length+'|'+rd(K_BOOK,[]).length;
 function csv(name,rows){const t='﻿'+rows.map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name;a.click()}
 document.addEventListener('click',async e=>{if(!e.target.closest('#sb')&&e.target.id!=='burger')$('#sb').classList.remove('open'); // klik di luar sidebar (mis. area gelap) menutupnya
  const t=e.target.closest('[data-role],[data-act],#ubtn,#burger,#out,#sbx');
@@ -184,14 +181,13 @@ document.addEventListener('click',async e=>{if(!e.target.closest('#sb')&&e.targe
  if(a==='unblk')saveBLK(BLK().filter(b=>b.id!==t.dataset.id));
  if(a==='clr'){localStorage.removeItem(K_LOG);render()}
  if(a==='clrb'){localStorage.removeItem(K_BOOK);render()}
- if(a==='clrr'){localStorage.removeItem(K_REP);render()}
  if(a==='csvlog')csv('log-chatbot.csv',[['Waktu','Jenis','Status','Waktu respons (ms)','Keterangan']].concat(allLogs().map(l=>[l.t.toISOString(),TYPES[l.type],l.ok?'Berhasil':'Gagal',l.ms,l.ket])));
- if(a==='csvaset')csv('aset-dbr.csv',[['Kode','Nama','Lokasi resmi','Terakhir terlihat','Status']].concat(assets().map(x=>[x.code,x.name,x.home||'',x.seen||'',x.st])));
+ if(a==='csvaset')csv('aset-dbr.csv',[['Kode stiker','Nama','Lokasi resmi (DBR)']].concat(assets().map(x=>[x.code,x.name,x.home||''])));
  if(a==='csvstok')csv('stok-barang.csv',[['Barang','Stok total','Kondisi']].concat(Object.values(D.stock).map(s=>[s.n,s.total,s.cond])))});
 document.addEventListener('change',e=>{const t=e.target;
  if(t.matches('[data-period]')){PERIOD=+t.value;render()}
  else if(t.matches('[data-lf]')){LOGF[t.dataset.lf]=t.value;render()}
- else if(t.matches('[data-af]')){AF=t.value;render()}
+
  else if(t.matches('[data-date]')&&t.value){DSEL=t.value;render()}});
 document.addEventListener('input',e=>{const t=e.target;if(t.matches('[data-lf="q"]')){LOGF.q=t.value;const pos=t.selectionStart;render();const n=$('[data-lf="q"]');n.focus();n.setSelectionRange(pos,pos)}});
 window.addEventListener('hashchange',()=>{$('#sb').classList.remove('open');render()});
