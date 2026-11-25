@@ -30,6 +30,15 @@ Jalankan dari folder ini (harus lewat server, bukan klik dua kali):
 - **Pengingat ke chatbot:** `/status` menampilkan status pengajuan dan pengembalian. Chatbot mengirim pengingat otomatis H-1, hari-H, dan saat terlambat, pengingat manual dari tombol 🔔 Staf, serta kabar saat barang tercatat dikembalikan. Reservasi dianggap milik chat ini lewat `siumper-mine` (setara chat id Telegram).
   - Catatan prototype: pengingat dicek berkala selama chat terbuka. Di Telegram asli, kirim lewat backend (penjadwal harian) karena bot harus bisa mengirim lebih dulu.
 
+## NLP dengan Gemini (ketik bebas)
+- Mahasiswa bisa mengetik bebas, mis. *"pinjam mic kabel besok jam 8 sampai 10 atas nama Budi, NIM 2200123, HIMA PGSD"*. Gemini mengubahnya menjadi data terstruktur, chatbot menanyakan hanya data yang kurang, lalu menampilkan ringkasan **Kirim / Edit / Batal**. Form tetap ada sebagai cadangan.
+- Gemini hanya memahami pesan. Tersedia/tidak, bentrok, dan jam layanan tetap dihitung dari data. Key Gemini disimpan di proxy (`backend/gemini-worker`), bukan di browser. Cara pasang: `backend/gemini-worker/README.md`.
+- NLP **nonaktif** sampai `window.SIUMPER_NLP_URL` di `js/nlp-config.js` diisi. Jika kosong atau proxy gagal, chatbot otomatis memakai parser regex lama.
+- Dashboard Tim IT: KPI "Formulir tanpa koreksi (IT-4)" kini terukur dari reservasi NLP (Kirim langsung = tanpa koreksi, Edit = dikoreksi); sebelum ada data NLP memakai data simulasi.
+
+## Aturan tanggal
+Cek dan reservasi (chatbot lewat form, teks, maupun NLP, serta form di dashboard) tidak bisa untuk tanggal sebelum hari ini. Hari ini (hari-H) boleh. Chatbot membalas pesan penolakan dan mencatatnya sebagai "Tanggal sudah lewat" di log.
+
 ## Deploy otomatis ke GitHub Pages
 Setelah mengubah file, jalankan `./deploy.sh "pesan singkat"` di folder ini. Skrip akan commit dan push ke
 https://github.com/nyranazwa/siumper, lalu GitHub Pages memperbarui situs dalam 1-2 menit. Pengaturan awal (sekali saja): lihat bagian bawah file `deploy.sh`.

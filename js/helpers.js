@@ -22,7 +22,6 @@ function setState(st,hint){S={...S,st};document.getElementById('hint').textConte
 const hh=n=>String(n).padStart(2,'0')+'.00';
 const winTxt=r=>hh(r.h[0])+' - '+hh(r.h[1])+' WIB';
 const tmin=t=>{const a=t.split(':');return +a[0]*60+ +a[1]};
-const todayIso=new Date().toISOString().slice(0,10);
 const fmt=i=>{const[y,m,d]=i.split('-');return (+d)+' '+MON[m-1][0].toUpperCase()+MON[m-1].slice(1)+' '+y};
 const dys=x=>x.days||[x.iso];
 const freeR=(k,d)=>Math.min(...dys(d).map(i=>itemFree(k,i)));
@@ -36,7 +35,7 @@ function openForm(mode,v){v=v||{};const room=mode==='res'&&S.kind==='room',pre=m
  const fld=(l,n,t,val,ex)=>'<label>'+l+'<input name="'+n+'" type="'+t+'" value="'+ea(val)+'" required'+(ex||'')+'></label>';
  let h='<form class="fm" autocomplete="off"><div class="sh-body"><div class="sh-info">'+head+'</div>';
  if(pre)h+='<div class="lock">'+(room?'Gedung: <b>'+pre.room.b+'</b><br>Ruangan: <b>'+pre.room.r+'</b>':'Barang: <b>'+STOCK[pre.item].n+'</b><br>Jumlah: <b>'+pre.qty+'</b>')+'<br>Tanggal: <b>'+pre.date.txt+'</b></div>';
- else h+=(room?roomSel:'<label>Barang<select name="brg">'+opts+'</select></label>'+fld('Jumlah','qty','number',v.qty||1,' min="1"'))+'<div class="seg"><button type="button" data-m="1">Sehari</button><button type="button" data-m="2">Lebih dari sehari</button></div><div class="row"><label><span class="l1">Tanggal</span><input name="d1" type="date" min="'+todayIso+'" value="'+d1+'" required></label><label class="d2"><span>Tanggal selesai</span><input name="d2" type="date" min="'+todayIso+'" value="'+(multi?d2:'')+'"></label></div>';
+ else h+=(room?roomSel:'<label>Barang<select name="brg">'+opts+'</select></label>'+fld('Jumlah','qty','number',v.qty||1,' min="1"'))+'<div class="seg"><button type="button" data-m="1">Sehari</button><button type="button" data-m="2">Lebih dari sehari</button></div><div class="row"><label><span class="l1">Tanggal</span><input name="d1" type="date" min="'+isoNow()+'" value="'+d1+'" required></label><label class="d2"><span>Tanggal selesai</span><input name="d2" type="date" min="'+isoNow()+'" value="'+(multi?d2:'')+'"></label></div>';
  if(mode==='res')h+='<div class="row">'+fld('Jam mulai','ws','time',tm[0])+fld('Jam selesai','we','time',tm[1])+'</div>'+(room?'<div class="winfo"></div><div class="warn" hidden></div>':(pre?'':'<div class="warn iw" hidden></div>'))+fld('Nama','nm','text',v.name)+'<div class="row">'+fld('NIM/NIP','nim','text',v.id)+fld('No HP','hp','tel',v.phone)+'</div>'+fld('Organisasi','org','text',v.org)+fld('Keperluan','need','text',v.need);
  h+='</div><div class="sh-foot"><button class="go">'+(mode==='cek'?'Cek ketersediaan':'Lanjut')+'</button></div></form>';
  setTimeout(()=>{const app=document.getElementById('app');let sh,f,bub=null;if(mode==='cek'){sh=add('bot form',h);f=sh.querySelector('form')}else{sh=document.createElement('div');sh.className='sheet';sh.innerHTML='<div class="sh-head"><b>'+(mode==='cek'?'Cek ketersediaan barang':'Reservasi '+(room?'ruangan':'barang'))+'</b><button type="button" class="x" aria-label="Tutup">✕</button></div>'+h;app.appendChild(sh);f=sh.querySelector('form');sh.querySelector('.x').onclick=()=>sh.remove();bub=add('bot',head+'<br><br><button type="button" class="reopen">📝 Buka form</button>');bub.querySelector('.reopen').onclick=()=>{if(!sh.isConnected)app.appendChild(sh)}}let m=multi?'2':'1';
@@ -44,7 +43,7 @@ function openForm(mode,v){v=v||{};const room=mode==='res'&&S.kind==='room',pre=m
   f.querySelectorAll('.seg button').forEach(x=>x.onclick=()=>{m=x.dataset.m;upd()});upd();
   if(!pre){if(room){const fillR=()=>{const b=f.elements.bld.value,hf=BFORM[b][1],fv=+f.elements.fl.value;f.elements.rm.innerHTML=ROOMS.filter(r=>r.b===b&&(!hf||r.f===fv)).map(r=>'<option>'+r.r+'</option>').join('')};
    const fillF=()=>{const b=f.elements.bld.value;f.querySelector('.lt').style.display=BFORM[b][1]?'':'none';f.elements.fl.innerHTML=flo(b).map(n=>'<option value="'+n+'">Lantai '+n+'</option>').join('');fillR()};
-   f.elements.bld.onchange=fillF;f.elements.fl.onchange=fillR}else{const si=f.elements.brg,q=f.elements.qty,mx=()=>{q.max=STOCK[si.value].total};si.onchange=mx;mx()}f.elements.d1.onchange=()=>{f.elements.d2.min=f.elements.d1.value||todayIso}}
+   f.elements.bld.onchange=fillF;f.elements.fl.onchange=fillR}else{const si=f.elements.brg,q=f.elements.qty,mx=()=>{q.max=STOCK[si.value].total};si.onchange=mx;mx()}f.elements.d1.onchange=()=>{f.elements.d2.min=f.elements.d1.value||isoNow()}}
   f.addEventListener('input',e=>e.target.setCustomValidity&&e.target.setCustomValidity(''));f.addEventListener('focusin',e=>{const t=e.target;setTimeout(()=>t.scrollIntoView&&t.scrollIntoView({block:'center',behavior:'smooth'}),300)});
   if(room){const wi=f.querySelector('.winfo'),wa=f.querySelector('.warn');
    const cur=()=>pre?pre.room:ROOMS.find(r=>r.b===f.elements.bld.value&&r.r===f.elements.rm.value);
