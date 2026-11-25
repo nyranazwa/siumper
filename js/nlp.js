@@ -7,17 +7,15 @@ const HARI=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const ISO_RE=/^\d{4}-\d{2}-\d{2}$/,HM_RE=/^([01]\d|2[0-3]):[0-5]\d$/;
 const NLP_MAP={ruangan:'room',barang:'item',jumlah:'qty',tanggal_mulai:'d1',tanggal_selesai:'d2',jam_mulai:'ws',jam_selesai:'we',nama:'name',nim_nip:'id',organisasi:'org',keperluan:'need'};
 
-// penanda di header chat: NLP tersambung atau memakai parser biasa (membantu saat demo)
-const nlpBadge=(ok,why)=>{const s=document.querySelector('header small');if(s)s.textContent='bot • prototype • '+(ok?'NLP aktif':'NLP gagal: '+(why||'tidak diketahui')+' (memakai parser biasa)')};
 async function nlpCall(text){
  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),9000),d=S.draft;
  try{
   const r=await fetch(window.SIUMPER_NLP_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,
    body:JSON.stringify({text,today:isoNow(),dayName:HARI[new Date().getDay()],rooms:ROOMS.map(rl),items:Object.values(STOCK).map(s=>s.n),
     context:d?{sedang_mengisi:d.intent,data_terkumpul:d.data}:undefined})});
-  const j=await r.json();if(j&&j.ok&&j.data){nlpBadge(true);return j.data}
-  console.warn('[nlp] proxy menjawab galat:',j&&j.error);nlpBadge(false,'proxy: '+(j&&j.error||'jawaban kosong'));return null
- }catch(e){console.warn('[nlp] gagal, memakai parser biasa:',e&&e.message||e);nlpBadge(false,e&&e.name==='AbortError'?'waktu habis':'permintaan diblokir browser atau CORS ('+(e&&e.message||e)+')');return null}
+  const j=await r.json();if(j&&j.ok&&j.data)return j.data
+  console.warn('[nlp] proxy menjawab galat:',j&&j.error);return null
+ }catch(e){console.warn('[nlp] gagal, memakai parser biasa:',e&&e.message||e);return null}
  finally{clearTimeout(to)}}
 
 // label dari Gemini -> objek ruangan / kunci barang (divalidasi terhadap data sebenarnya)
@@ -28,7 +26,7 @@ async function nlpHandle(t,fallback){
  const wait=add('bot','⏳ Memahami pesan…'),res=await nlpCall(t);wait.remove();
  if(!res)return fallback(); // proxy mati / belum diatur -> parser biasa
  const m=res.maksud;
- if(m==='status'){S.draft=null;return statusCmd()}
+ if(m==='status'){S.draft=null;return bot('Keputusan pengajuan (disetujui atau ditolak, beserta alasannya) dikirim di chat ini setelah Staf UMPER memverifikasi. Pengingat pengembalian barang juga dikirim otomatis.')}
  if(m==='batal'){if(S.draft||['resText','confirm','spj'].includes(S.st)){S.draft=null;return cancelRes()}return bot('Tidak ada pengajuan yang sedang diisi. Gunakan /reservasi untuk mengajukan peminjaman.')}
  if(m==='sapaan'){S.draft=null;return MENU()}
  if(m==='lainnya'&&!S.draft){window.siumperRec&&siumperRec('lainnya',false,'Pesan tidak dipahami');
