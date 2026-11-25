@@ -8,7 +8,7 @@ const ISO_RE=/^\d{4}-\d{2}-\d{2}$/,HM_RE=/^([01]\d|2[0-3]):[0-5]\d$/;
 const NLP_MAP={ruangan:'room',barang:'item',jumlah:'qty',tanggal_mulai:'d1',tanggal_selesai:'d2',jam_mulai:'ws',jam_selesai:'we',nama:'name',nim_nip:'id',organisasi:'org',keperluan:'need'};
 
 // penanda di header chat: NLP tersambung atau memakai parser biasa (membantu saat demo)
-const nlpBadge=ok=>{const s=document.querySelector('header small');if(s)s.textContent='bot • prototype • '+(ok?'NLP aktif':'NLP tidak tersambung (parser biasa)')};
+const nlpBadge=(ok,why)=>{const s=document.querySelector('header small');if(s)s.textContent='bot • prototype • '+(ok?'NLP aktif':'NLP gagal: '+(why||'tidak diketahui')+' (memakai parser biasa)')};
 async function nlpCall(text){
  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),9000),d=S.draft;
  try{
@@ -16,8 +16,8 @@ async function nlpCall(text){
    body:JSON.stringify({text,today:isoNow(),dayName:HARI[new Date().getDay()],rooms:ROOMS.map(rl),items:Object.values(STOCK).map(s=>s.n),
     context:d?{sedang_mengisi:d.intent,data_terkumpul:d.data}:undefined})});
   const j=await r.json();if(j&&j.ok&&j.data){nlpBadge(true);return j.data}
-  console.warn('[nlp] proxy menjawab galat:',j&&j.error);nlpBadge(false);return null
- }catch(e){console.warn('[nlp] gagal, memakai parser biasa:',e&&e.message||e);nlpBadge(false);return null}
+  console.warn('[nlp] proxy menjawab galat:',j&&j.error);nlpBadge(false,'proxy: '+(j&&j.error||'jawaban kosong'));return null
+ }catch(e){console.warn('[nlp] gagal, memakai parser biasa:',e&&e.message||e);nlpBadge(false,e&&e.name==='AbortError'?'waktu habis':'permintaan diblokir browser atau CORS ('+(e&&e.message||e)+')');return null}
  finally{clearTimeout(to)}}
 
 // label dari Gemini -> objek ruangan / kunci barang (divalidasi terhadap data sebenarnya)
