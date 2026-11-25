@@ -70,7 +70,8 @@ document.addEventListener('input',e=>{const t=e.target;if(t.matches('[data-rjtxt
  if(t.matches('[data-rq]')){RQ=t.value;const p=t.selectionStart;render();const n=document.querySelector('[data-rq]');n.focus();n.setSelectionRange(p,p)}});
 document.addEventListener('submit',e=>{const f=e.target;if(!f.matches('[data-res-form]'))return;e.preventDefault();
  const g=n=>f.elements[n].value.trim(),dt=g('dt'),ws=g('ws'),we=g('we'),room=RTAB==='room';let msg='';
- if(we<=ws)msg='Jam selesai harus setelah jam mulai.';
+ if(dt<isoL(new Date()))msg='Tanggal peminjaman tidak boleh sebelum hari ini.';
+ else if(we<=ws)msg='Jam selesai harus setelah jam mulai.';
  else if(room){const r=RM().find(x=>rl(x)===g('tgt')),w=roomWin(r,dt);
   if(!w)msg=r.r+' tidak tersedia pada '+fIso(dt)+' ('+(!roomFree(r,dt)?(isBlk('room',rl(r).toLowerCase(),dt)?'dinonaktifkan admin UMPER':'sudah dipesan'):'di luar jam layanan')+').';
   else if(+ws.slice(0,2)*60+ +ws.slice(3)<w[0]*60||+we.slice(0,2)*60+ +we.slice(3)>w[1]*60)msg=r.r+' hanya tersedia pukul '+hh(w[0])+' - '+hh(w[1])+' WIB pada tanggal itu.'}

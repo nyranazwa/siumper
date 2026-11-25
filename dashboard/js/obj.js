@@ -75,7 +75,8 @@ function oIT(){const logs=recent(allLogs()),today=sod(new Date()),P=PERIOD,from=
  const whyRows=Object.entries(why).sort((a,b)=>b[1]-a[1]).slice(0,4);
  // IT-2 waktu respons
  const tT=D.dashboard.targetMs/1000,per=days.map(d=>inR(cur,d,addD(d,1))),txt=fillGaps(per.map(x=>x.length?oAvgS(x):null),0),pT=cur.length?cur.filter(l=>l.ms/1000<=tT).length/cur.length*100:0,pTp=prv.length?prv.filter(l=>l.ms/1000<=tT).length/prv.length*100:0;
- // IT-4 formulir tanpa koreksi (simulasi)
+ // IT-4 formulir tanpa koreksi: terukur dari reservasi chatbot yang memakai NLP; jika belum ada, memakai data simulasi
+ const nlA=RES().filter(r=>r.nlp),nlN=nlA.length,nlOk=nlA.filter(r=>r.nlp==='tanpa_koreksi').length,nlPct=nlN?Math.round(nlOk/nlN*100):0;
  const ft=ex.formTanpaKoreksi||[],wl=ft.map((_,i)=>fmtD(addD(today,-7*(ft.length-1-i))));
  // IT-5 sinkronisasi
  let ls=null;try{ls=localStorage.getItem('siumper-lastsync')}catch(e){}const last=ls?new Date(ls):SYNC,fail=+(localStorage.getItem('siumper-syncfail')||0),online=navigator.onLine&&SRC_OK;
@@ -84,7 +85,8 @@ function oIT(){const logs=recent(allLogs()),today=sod(new Date()),P=PERIOD,from=
  const mxC=Math.ceil(Math.max(...gw,lim/4)/20000)*20000;
  const kpis='<div class="kpis">'+kpi('✔','g','Permintaan berhasil (IT-1)',Math.round(c.rate)+'%',delta(c.rate-p.rate,true,'%',' dari periode sebelumnya'))+
   kpi('⚡','b','Respons ≤ '+tT+' detik (IT-2)',Math.round(pT)+'%',delta(pT-pTp,true,'%',' dari periode sebelumnya'))+
-  kpi('📝','b','Formulir tanpa koreksi (IT-4)',(ft.length?ft[ft.length-1]:0)+'%',ft.length>1?delta(ft[ft.length-1]-ft[ft.length-2],true,'%',' dari minggu lalu')+' '+SIM:SIM)+
+  (nlN?kpi('📝','b','Formulir tanpa koreksi (IT-4)',nlPct+'%','<b>terukur</b>: '+nlOk+' dari '+nlN+' reservasi via NLP')
+   :kpi('📝','b','Formulir tanpa koreksi (IT-4)',(ft.length?ft[ft.length-1]:0)+'%',ft.length>1?delta(ft[ft.length-1]-ft[ft.length-2],true,'%',' dari minggu lalu')+' '+SIM:SIM))+
   '<div class="card kpi"><div class="ico '+(online?'g':'r')+'">'+(online?'🟢':'🔴')+'</div><div><div class="l">Terakhir sinkron (IT-5)</div><div class="v" style="font-size:20px">'+(last?fmtT(last):'-')+'</div><div class="d"><span class="bd '+(online?'ok':'bad')+'">'+(online?'Terhubung':'Terputus')+'</span> &nbsp;Gagal: <b class="'+(fail?'red':'grn')+'">'+fail+'</b></div></div></div></div>';
  const cResp='<div class="card"><div class="ch"><h3>Waktu Respons Chatbot</h3>'+periodSel()+'</div>'+leg([['Rata-rata waktu respons','#e5484d'],['Target ≤ '+tT+' detik','#2a6fdb']])+
   lineChart({labels,min:0,max:5,ticks:[0,1,2,3,4,5],fmt:(v,x)=>dec(v,x?1:0)+' dtk',target:tT,series:[{name:'Waktu respons',color:'#e5484d',vals:txt}]})+

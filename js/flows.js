@@ -1,5 +1,8 @@
 // Alur percakapan bot: /start, /cek, /reservasi.
 // ---------- FLOWS ----------
+// Tanggal sebelum hari ini tidak boleh dicek maupun direservasi (hari ini = hari-H boleh).
+const isPast=d=>!!d&&dys(d).some(i=>i<isoNow());
+const pastMsg=(d,what)=>'⚠️ '+B('Tidak bisa '+what)+'\n\nTanggal '+fmt(dys(d).find(i=>i<isoNow()))+' sudah lewat. '+(what.startsWith('mengecek')?'Pengecekan':'Reservasi')+' hanya bisa untuk hari ini atau tanggal setelahnya.';
 const MENU=()=>bot('Selamat datang di layanan SiUMPER!\nGunakan:\n\n'+B('/Cek')+' untuk melihat ketersediaan ruangan dan barang,\n'+B('/Reservasi')+' untuk peminjaman ruangan dan barang,\n'+B('/Status')+' untuk melihat status pengajuan dan pengembalian barang');
 function start(){S={st:'idle'};setState('idle');MENU()}
 function cek(){S.pre=null;S.preR=null;setState('idle');bot(B('Informasi ruangan dan barang')+'\n\n'+B('/Ruangan')+' - Untuk cek kesediaan ruangan\n'+B('/Barang')+' - Untuk cek kesediaan barang',[['/Ruangan',ruangan],['/Barang',barang]])}
@@ -10,7 +13,7 @@ function roomCekForm(bld){const rs=ROOMS.filter(r=>r.b===bld),cf=BFORM[bld]||[1,
  const floorF=cf[1]?'<label>Lantai<select name="fl">'+fls.map(n=>'<option value="'+n+'">Lantai '+n+'</option>').join('')+'</select></label>':'';
  const roomF=cf[0]?'<label>Nama ruangan<select name="rm">'+rOpts(fls[0])+'</select></label>':'';
  const note=!cf[0]?'Isi tanggal penggunaan. Peminjaman berlaku untuk seluruh '+esc(bld)+'.':cf[1]?'Pilih lantai, nama ruangan, dan tanggal penggunaan.':'Isi nama ruangan dan tanggal penggunaan.';
- setTimeout(()=>{const b=add('bot form','<div class="sh-info">🏢 <b>'+esc(bld)+'</b><br>'+note+' Kami akan memberi informasi ketersediaannya.</div><form class="fm" autocomplete="off">'+floorF+roomF+'<div class="seg"><button type="button" data-m="1">Sehari</button><button type="button" data-m="2">Lebih dari sehari</button></div><div class="row"><label><span class="l1">Tanggal</span><input name="d1" type="date" min="'+todayIso+'" required></label><label class="d2"><span>Tanggal selesai</span><input name="d2" type="date" min="'+todayIso+'"></label></div><div class="sh-foot"><button class="go">Cek ketersediaan</button></div></form>'),f=b.querySelector('form');let m='1';const upd=()=>{f.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on',x.dataset.m===m));f.querySelector('.d2').style.display=m==='2'?'':'none';f.elements.d2.required=m==='2';f.querySelector('.l1').textContent=m==='2'?'Tanggal mulai':'Tanggal'};f.querySelectorAll('.seg button').forEach(x=>x.onclick=()=>{m=x.dataset.m;upd()});upd();f.elements.d1.onchange=()=>{f.elements.d2.min=f.elements.d1.value||todayIso};f.addEventListener('input',e=>e.target.setCustomValidity&&e.target.setCustomValidity(''));
+ setTimeout(()=>{const b=add('bot form','<div class="sh-info">🏢 <b>'+esc(bld)+'</b><br>'+note+' Kami akan memberi informasi ketersediaannya.</div><form class="fm" autocomplete="off">'+floorF+roomF+'<div class="seg"><button type="button" data-m="1">Sehari</button><button type="button" data-m="2">Lebih dari sehari</button></div><div class="row"><label><span class="l1">Tanggal</span><input name="d1" type="date" min="'+isoNow()+'" required></label><label class="d2"><span>Tanggal selesai</span><input name="d2" type="date" min="'+isoNow()+'"></label></div><div class="sh-foot"><button class="go">Cek ketersediaan</button></div></form>'),f=b.querySelector('form');let m='1';const upd=()=>{f.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on',x.dataset.m===m));f.querySelector('.d2').style.display=m==='2'?'':'none';f.elements.d2.required=m==='2';f.querySelector('.l1').textContent=m==='2'?'Tanggal mulai':'Tanggal'};f.querySelectorAll('.seg button').forEach(x=>x.onclick=()=>{m=x.dataset.m;upd()});upd();f.elements.d1.onchange=()=>{f.elements.d2.min=f.elements.d1.value||isoNow()};f.addEventListener('input',e=>e.target.setCustomValidity&&e.target.setCustomValidity(''));
   const curR=()=>cf[0]?rs.find(r=>r.r===f.elements.rm.value&&(!cf[1]||r.f===+f.elements.fl.value)):rs[0];
   if(cf[1])f.elements.fl.onchange=()=>{f.elements.rm.innerHTML=rOpts(+f.elements.fl.value)};
   f.onsubmit=e=>{e.preventDefault();const r=curR(),a=f.elements.d1.value,b2=m==='2'?f.elements.d2.value:'';
@@ -22,7 +25,7 @@ function barang(){S.pre=null;S.preR=null;setState('cekItem','Isi form, atau keti
 function doCekRoom(t){const r=findRoom(t),d=parseDate(t);
  if(!r||!d)return bot('⚠️ Ruangan atau tanggal belum terbaca. Contoh: "Ruang 4 tanggal 12 September 2026". Pilih gedung dulu lewat /ruangan agar form muncul.');
  cekRoomCore(r,d)}
-function cekRoomCore(r,d){setState('idle');S.pre=null;const days=dys(d),multi=days.length>1;
+function cekRoomCore(r,d){setState('idle');if(isPast(d))return bot(pastMsg(d,'mengecek ketersediaan ruangan'),[['/Ruangan',ruangan]]);S.pre=null;const days=dys(d),multi=days.length>1;
  const per=days.map(i=>({i,w:roomWin(r,i)})),bad=per.filter(x=>!x.w),w=bad.length?null:winFor(r,days);
  S.preR=w?{room:r,date:d}:null;
  const ask='\n\nApakah kamu ingin melakukan peminjaman ruangan ini?\nSilakan gunakan /reservasi untuk melanjutkan proses peminjaman.';
@@ -35,7 +38,7 @@ function cekRoomCore(r,d){setState('idle');S.pre=null;const days=dys(d),multi=da
 function doCekItem(t){const k=findItem(t),d=parseDate(t);
  if(!k||!d)return bot('⚠️ Barang atau tanggal belum terbaca. Gunakan form, atau ketik mis. "Mic wireless, 2, Sabtu 12 september 2026". Barang tersedia: '+Object.values(STOCK).map(x=>x.n).join(', ')+'.');
  const q=+(t.replace(/\d{1,2}\s+\w+\s+\d{4}/,'').match(/,\s*(\d+)/)||[0,1])[1];cekItemCore(k,q,d)}
-function cekItemCore(k,q,d){const free=freeR(k,d);S.preR=null;S.pre=free>=q?{item:k,qty:q,date:d}:null;setState('idle');
+function cekItemCore(k,q,d){if(isPast(d)){S.pre=null;S.preR=null;setState('idle');return bot(pastMsg(d,'mengecek ketersediaan barang'),[['/Barang',barang]])}const free=freeR(k,d);S.preR=null;S.pre=free>=q?{item:k,qty:q,date:d}:null;setState('idle');
  if(free>=q)bot('✅ '+B('Informasi barang ditemukan')+'\n\nBarang yang kamu cari tersedia!\nNama Barang: '+STOCK[k].n+'\nJumlah Tersedia: '+free+' unit\nTanggal: '+d.txt+'\nKondisi: '+STOCK[k].cond+'\n\nApakah kamu ingin melakukan peminjaman barang ini?\nSilakan gunakan /reservasi untuk melanjutkan proses peminjaman.',[['/Reservasi',reservasi]]);
  else bot('✅ '+B('Informasi barang ditemukan')+'\n\nBarang yang kamu cari '+B('tidak tersedia')+'! (sisa '+free+' unit, diminta '+q+')\nTanggal: '+d.txt+'\n\nApakah kamu ingin melakukan peminjaman barang lain?\nSilakan gunakan /barang untuk cek kesediaan barang.',[['/Barang',barang]])}
 function reservasi(){S.pre?resFormPre():S.preR?resFormPreR():resMenu()}
@@ -47,16 +50,19 @@ function parseRes(t){const d=parseDate(t),w=t.match(/(\d{1,2})[.:](\d{2})\s*-\s*
  const x={date:d,time:w?w[1].padStart(2,'0')+'.'+w[2]+'-'+w[3].padStart(2,'0')+'.'+w[4]:null,name:n&&n[1].trim(),id:id&&id[2],org:o&&o[0].trim(),need:k&&k[1].trim()};
  if(S.kind==='room'){x.room=findRoom(t)}else{x.item=findItem(t);x.qty=+((t.match(new RegExp(x.item?x.item+'\\s*,?\\s*(\\d+)':'$^','i'))||[0,1])[1])}
  return x}
-function doRes(t){const x=parseRes(t),miss=[];if(S.pre&&S.kind==='item'){x.item=S.pre.item;x.qty=S.pre.qty;x.date=S.pre.date}if(S.preR&&S.kind==='room'){x.room=S.preR.room;x.date=S.preR.date}
+function doRes(t){return checkRes(parseRes(t))}
+function checkRes(x){const miss=[];if(S.pre&&S.kind==='item'){x.item=S.pre.item;x.qty=S.pre.qty;x.date=S.pre.date}if(S.preR&&S.kind==='room'){x.room=S.preR.room;x.date=S.preR.date}
+ if(x.date&&isPast(x.date)){S.draft=null;return bot(pastMsg(x.date,'mengajukan reservasi'))}
  if(S.kind==='room'&&!x.room)miss.push('Gedung & Ruangan');if(S.kind==='item'&&!x.item)miss.push('Nama Barang (tersedia: '+Object.values(STOCK).map(s=>s.n).join(', ')+')');
  if(!x.date)miss.push('Tanggal (mis. 10 Oktober 2026)');if(!x.time)miss.push('Waktu (mis. 08.00-12.00)');if(!x.name)miss.push('Nama');if(!x.id)miss.push('NIM/NIP');if(!x.org)miss.push('Organisasi');
- if(miss.length)return bot('⚠️ Data belum lengkap. Mohon lengkapi:\n• '+miss.join('\n• ')+'\n\nKirim ulang detail peminjaman dalam satu pesan.');
+ if(miss.length)return bot('⚠️ Data belum lengkap. Mohon lengkapi:\n• '+miss.join('\n• ')+'\n\n'+(x.nlp?'Cukup balas data yang kurang saja.':'Kirim ulang detail peminjaman dalam satu pesan.'));
  if(S.kind==='room'&&x.room&&x.time){const tt=x.time.split('-').map(z=>z.replace('.',':')),ww=winFor(x.room,dys(x.date))||x.room.h,o=ww[0],c=ww[1];if(tmin(tt[0])<o*60||tmin(tt[1])>c*60)return bot('⚠️ '+B('Waktu yang dipilih tidak tersedia')+'\n\n'+x.room.r+' hanya tersedia pukul '+winTxt(x.room)+'.\nSilakan kirim ulang dengan waktu yang sesuai.')}confirmRes(x)}
-function confirmRes(x){S.res=x;setState('confirm','Tekan Kirim, Edit, atau Batal');
+function confirmRes(x){S.res=x;S.draft=null;setState('confirm','Tekan Kirim, Edit, atau Batal');
  const lines=S.kind==='room'?'Gedung: '+x.room.b.replace('Gedung ','')+'\nRuangan: '+x.room.r:'Barang: '+STOCK[x.item].n+'\nJumlah: '+x.qty;
- bot('🔍 '+B('Data Reservasi')+'\n\n'+lines+'\nTanggal: '+x.date.txt+'\nWaktu: '+x.time+'\nNama: '+x.name+'\nOrganisasi: '+x.org+'\n\nData sudah benar?',[['✅ Kirim',verify],['✏️ Edit',()=>openForm('res',x)],['❌ Batal',cancelRes]])}
-function cancelRes(){S.res=null;S.pre=null;S.preR=null;S.upCard=null;setState('idle');bot('❌ '+B('Reservasi dibatalkan')+'\n\nPengajuan tidak dikirim dan tidak ada data yang disimpan. Gunakan /reservasi untuk mengajukan lagi.',[['/Reservasi',reservasi],['/Cek',cek]])}
+ bot('🔍 '+B('Data Reservasi')+'\n\n'+lines+'\nTanggal: '+x.date.txt+'\nWaktu: '+x.time+'\nNama: '+x.name+'\nOrganisasi: '+x.org+'\n\nData sudah benar?',[['✅ Kirim',verify],['✏️ Edit',()=>{if(x.nlp)S.nlpEdit=true;openForm('res',x)}],['❌ Batal',cancelRes]])}
+function cancelRes(){S.res=null;S.draft=null;S.nlpEdit=false;S.pre=null;S.preR=null;S.upCard=null;setState('idle');bot('❌ '+B('Reservasi dibatalkan')+'\n\nPengajuan tidak dikirim dan tidak ada data yang disimpan. Gunakan /reservasi untuk mengajukan lagi.',[['/Reservasi',reservasi],['/Cek',cek]])}
 async function verify(){const x=S.res;S.pre=null;S.preR=null;
+ if(isPast(x.date)){setState('idle');return bot(pastMsg(x.date,'mengajukan reservasi'))}
  const ok=S.kind==='room'?dys(x.date).every(i=>roomWin(x.room,i)):freeR(x.item,x.date)>=x.qty;
  if(!ok){setState('idle');return bot('🔍 '+B('Memverifikasi data...')+'\n\n✅ Data pemohon lengkap\n❌ '+(S.kind==='room'?'Ruangan':'Barang')+' tidak tersedia pada tanggal tersebut\n\nSilakan cek ketersediaan lain dengan /cek.',[['/Cek',cek]])}
  setState('spj','Unggah SPJ dan SIK pada kartu unggah, atau lewat tombol 📎');

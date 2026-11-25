@@ -10,11 +10,12 @@
  function rec(type,ok,ket,ms){logged=true;const a=rd(K_LOG,[]);
   a.push({t:new Date().toISOString(),type,ok:!!ok,ms:ms||Math.round(performance.now()-t0)+350,ket}); // +350 = jeda animasi balasan bot
   wr(K_LOG,a.slice(-1000))}
+ window.siumperRec=rec;
  const wrap=(name,fn)=>{const o=window[name];if(typeof o!=='function')return;window[name]=function(){return fn(o,arguments)}};
 
- wrap('cekItemCore',(o,a)=>{const k=a[0],q=a[1],d=a[2];const free=freeR(k,d);
+ wrap('cekItemCore',(o,a)=>{const k=a[0],q=a[1],d=a[2];if(isPast(d)){rec('barang',false,'Tanggal sudah lewat');return o.apply(null,a)}const free=freeR(k,d);
   rec('barang',true,STOCK[k].n+(free>=q?' tersedia ('+free+' unit)':' tidak tersedia'));return o.apply(null,a)});
- wrap('cekRoomCore',(o,a)=>{const r=a[0],d=a[1];const ok=!dys(d).some(i=>!roomWin(r,i));
+ wrap('cekRoomCore',(o,a)=>{const r=a[0],d=a[1];if(isPast(d)){rec('ruangan',false,'Tanggal sudah lewat');return o.apply(null,a)}const ok=!dys(d).some(i=>!roomWin(r,i));
   rec('ruangan',true,r.r+(ok?' tersedia':' tidak tersedia'));return o.apply(null,a)});
  wrap('doCekItem',(o,a)=>{logged=false;const r=o.apply(null,a);if(!logged)rec('barang',false,'Barang atau tanggal tidak terbaca');return r});
  wrap('doCekRoom',(o,a)=>{logged=false;const r=o.apply(null,a);if(!logged)rec('ruangan',false,'Ruangan atau tanggal tidak terbaca');return r});
