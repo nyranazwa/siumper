@@ -166,7 +166,7 @@ function render(){if(!D)return;sync();const p=cur();
  $('#umenu').innerHTML='<div class="h">Tampilkan sebagai</div><button data-role="it" class="'+(ROLE==='it'?'on':'')+'">Tim IT – Bruno</button><button data-role="staff" class="'+(ROLE==='staff'?'on':'')+'">Staf UMPER – Abel</button><button data-role="pimpinan" class="'+(ROLE==='pimpinan'?'on':'')+'">Pimpinan – Kepala UMPER</button>';
  $('#today').textContent=fmtFull(new Date());
  const y=window.scrollY;$('#pg').innerHTML=PAGES[ROLE][p]();window.scrollTo(0,y);sig=signature()}
-const signature=()=>BLK().length+'|'+rd(K_LOG,[]).length+'|'+rd(K_BOOK,[]).length;
+const signature=()=>BLK().length+'|'+rd(K_LOG,[]).length+'|'+rd(K_BOOK,[]).length+'|'+(typeof RES==='function'?RES().map(r=>r.status+(r.returned?'R':'')+(r.remind||'')).join(''):'');
 function csv(name,rows){const t='﻿'+rows.map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name;a.click()}
 document.addEventListener('click',async e=>{if(!e.target.closest('#sb')&&e.target.id!=='burger')$('#sb').classList.remove('open'); // klik di luar sidebar (mis. area gelap) menutupnya
  const t=e.target.closest('[data-role],[data-act],#ubtn,#burger,#out,#sbx');
@@ -192,7 +192,7 @@ document.addEventListener('change',e=>{const t=e.target;
 document.addEventListener('input',e=>{const t=e.target;if(t.matches('[data-lf="q"]')){LOGF.q=t.value;const pos=t.selectionStart;render();const n=$('[data-lf="q"]');n.focus();n.setSelectionRange(pos,pos)}});
 window.addEventListener('hashchange',()=>{$('#sb').classList.remove('open');render()});
 window.addEventListener('storage',()=>{if(signature()!==sig)render()});
-setInterval(()=>{if(D&&signature()!==sig&&!document.activeElement.matches('input,select'))render()},4000);
+setInterval(()=>{if(D&&signature()!==sig&&!document.activeElement.matches('input,select,textarea'))render()},4000);
 load().then(ok=>{if(ok)render()});
 window.addEventListener('siumper-cloud',()=>{if(D&&!document.activeElement.matches('input,select,textarea'))render()});
 document.addEventListener('submit',e=>{const f=e.target;if(!f.matches('[data-blk-form]'))return;e.preventDefault();const g=n=>f.elements[n].value.trim(),from=g('from'),to=g('to');

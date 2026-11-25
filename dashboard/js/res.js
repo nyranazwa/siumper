@@ -4,18 +4,37 @@ const RES=()=>rd(K_RES,null)||D.reservations||[];
 const saveRES=l=>{try{localStorage.setItem(K_RES,JSON.stringify(l))}catch(e){alert('Gagal menyimpan ke browser.')}};
 const bookBase=()=>rd(K_BOOK,null)||JSON.parse(JSON.stringify(D.bookings));
 const roomKey=r=>(r.gedung===r.ruang?r.ruang:r.gedung+' - '+r.ruang).toLowerCase();
-function setStatus(id,st){const l=RES(),r=l.find(z=>z.id===id);if(!r)return;r.status=st;if(st==='Diproses')delete r.verified;else r.verified=new Date().toISOString();saveRES(l);
+function setStatus(id,st,why){const l=RES(),r=l.find(z=>z.id===id);if(!r)return;r.status=st;if(st==='Diproses')delete r.verified;else r.verified=new Date().toISOString();
+ if(st==='Ditolak'&&why){r.alasan=why.alasan;r.alasanDetail=why.detail||''}else{delete r.alasan;delete r.alasanDetail}
+ if(st!=='Disetujui'){delete r.returned;delete r.remind;delete r.remindSeen;delete r.retSeen;delete r.reminded}saveRES(l);
  const b=bookBase().filter(z=>z.res!==id);
  if(st==='Disetujui')r.dates.forEach(d=>b.push(r.kind==='room'?{kind:'room',key:roomKey(r),date:d,res:id}:{kind:'item',key:r.item,qty:r.qty,date:d,res:id}));
  try{localStorage.setItem(K_BOOK,JSON.stringify(b))}catch(e){}render()}
 let RTAB='room',RST='',RQ='',RMSG='';
 const fIso=i=>{const d=new Date(i+'T00:00:00');return d.getDate()+' '+MS[d.getMonth()]+' '+d.getFullYear()};
 const stCls={Diproses:'warn',Disetujui:'ok',Ditolak:'bad'};
+// ---------- Alasan penolakan ----------
+const ALASAN=['Dokumen salah / tidak lengkap','Keputusan mendadak dari kampus','Lainnya'];
+const alasanTxt=r=>r.alasan?(r.alasan==='Lainnya'&&r.alasanDetail?r.alasanDetail:r.alasan+(r.alasanDetail?' - '+r.alasanDetail:'')):'';
+let RJ=null; // {id,alasan,detail} jika dialog tolak sedang terbuka
+// ---------- Status pengembalian barang (hanya peminjaman barang yang disetujui) ----------
+const lastDate=r=>r.dates[r.dates.length-1];
+const loanOf=r=>{if(r.kind!=='item'||r.status!=='Disetujui')return '';if(r.returned)return 'Dikembalikan';const t=isoL(new Date());return t>lastDate(r)?'Terlambat':t>=r.dates[0]?'Dipinjam':'Dijadwalkan'};
+const loanCls={Dikembalikan:'ok',Terlambat:'bad',Dipinjam:'warn',Dijadwalkan:'gr'};
+const lateDays=r=>Math.max(0,Math.round((new Date(isoL(new Date())+'T00:00:00')-new Date(lastDate(r)+'T00:00:00'))/864e5));
+const hm=iso=>{const d=new Date(iso);return pad(d.getHours())+'.'+pad(d.getMinutes())};
+const loanBadge=r=>{const s=loanOf(r);return s?'<br><span class="bd '+loanCls[s]+'" style="margin-top:4px">'+(s==='Terlambat'?'Terlambat '+lateDays(r)+' hari':s)+'</span>'+(r.remind&&!r.returned?'<br><small>🔔 diingatkan '+hm(r.remind)+'</small>':'')+(r.returned?'<br><small>'+fIso(r.returned.slice(0,10))+'</small>':''):''};
+const rejectModal=()=>{if(!RJ)return '';const r=RES().find(z=>z.id===RJ.id);if(!r)return '';
+ return '<div class="rjov"><div class="mbox"><h3>Tolak pengajuan</h3><p class="sub" style="margin:0 0 10px"><code>'+esc(r.id)+'</code> - '+esc(r.name)+'</p>'+
+  '<label>Alasan penolakan<select data-rjsel><option value="">- Pilih alasan -</option>'+ALASAN.map(a=>'<option'+(RJ.alasan===a?' selected':'')+'>'+a+'</option>').join('')+'</select></label>'+
+  (RJ.alasan==='Lainnya'?'<label>Tuliskan alasan<textarea data-rjtxt rows="3" placeholder="Diisi oleh Staf UMPER">'+esc(RJ.detail)+'</textarea></label>':RJ.alasan?'<label>Catatan tambahan (opsional)<textarea data-rjtxt rows="2" placeholder="Mis. SPJ belum ditandatangani">'+esc(RJ.detail)+'</textarea></label>':'')+
+  '<p class="sub" style="margin:8px 0 0">Alasan ini dikirim ke mahasiswa lewat chatbot.</p>'+
+  '<div class="macts"><button class="btn sec2" data-res="rjx">Batal</button> <button class="btn ylw" data-res="rjok"'+(RJ.alasan&&(RJ.alasan!=='Lainnya'||RJ.detail.trim())?'':' disabled')+'>✕ Tolak pengajuan</button></div></div></div>'};
 const jadwal=r=>(r.dates.length>1?fIso(r.dates[0])+' s/d '+fIso(r.dates[r.dates.length-1]):fIso(r.dates[0]))+'<br><small>'+esc(r.time.replace(/\./g,':').replace('-',' – '))+' WIB</small>';
 const rname=r=>r.kind==='room'?(r.gedung===r.ruang?r.ruang:r.ruang+'<br><small>'+esc(r.gedung)+'</small>'):esc(r.itemNama)+' <small>× '+r.qty+'</small>';
 
 function resPage(){const all=RES(),rows=all.filter(r=>r.kind===RTAB),q=RQ.toLowerCase();
- const list=rows.filter(r=>(!RST||r.status===RST)&&(!q||[r.id,r.name,r.nim,r.org,r.need,r.ruang,r.gedung,r.itemNama].join(' ').toLowerCase().includes(q))).sort((a,b)=>b.created.localeCompare(a.created));
+ const list=rows.filter(r=>(!RST||(RST.startsWith('L:')?(RST==='L:belum'?['Dipinjam','Terlambat'].includes(loanOf(r)):loanOf(r)===RST.slice(2)):r.status===RST))&&(!q||[r.id,r.name,r.nim,r.org,r.need,r.ruang,r.gedung,r.itemNama].join(' ').toLowerCase().includes(q))).sort((a,b)=>b.created.localeCompare(a.created));
  const cnt=s=>rows.filter(r=>r.status===s).length,room=RTAB==='room',today=isoL(new Date());
  const field=(l,n,ph,t,req)=>'<label>'+l+'<input name="'+n+'" type="'+(t||'text')+'" placeholder="'+ph+'"'+(req===false?'':' required')+'></label>';
  const target=room?'<label>Nama Ruangan<select name="tgt">'+RM().map(r=>'<option value="'+esc(rl(r))+'">'+esc(rl(r))+'</option>').join('')+'</select></label>':'<label>Barang<select name="tgt">'+Object.entries(D.stock).map(([k,s])=>'<option value="'+k+'">'+esc(s.n)+' (maks '+s.total+')</option>').join('')+'</select></label>'+field('Jumlah','qty','1','number');
@@ -25,11 +44,11 @@ function resPage(){const all=RES(),rows=all.filter(r=>r.kind===RTAB),q=RQ.toLowe
  '<label>Tanggal Pinjam<input name="dt" type="date" min="'+today+'" required></label><div style="display:flex;gap:8px"><label style="flex:1">Jam Mulai<input name="ws" type="time" value="08:00" required></label><label style="flex:1">Jam Selesai<input name="we" type="time" value="12:00" required></label></div>'+field('Keperluan Acara','need','Deskripsi singkat acara…')+
  '<div class="warn" '+(RMSG?'':'hidden')+'>⚠️ '+esc(RMSG)+'</div><button class="btn gr">✓ Simpan Peminjaman</button></form></div>'+
  '<div class="card"><div class="ch"><h3>Daftar Peminjaman '+(room?'Ruangan':'Barang')+'</h3><span class="noprint"><button class="btn sm" data-res="csv">⬇ Ekspor CSV</button> <button class="btn sm blue" data-res="print">🖨 Cetak Rekap</button></span></div>'+
- '<div class="tools noprint"><input data-rq placeholder="Cari berdasarkan nama, NIM/NIP, '+(room?'ruangan':'barang')+', atau lembaga…" value="'+esc(RQ)+'" style="flex:1;min-width:220px"><select data-rs><option value="">Semua status ('+rows.length+')</option>'+['Diproses','Disetujui','Ditolak'].map(s=>'<option value="'+s+'"'+(RST===s?' selected':'')+'>'+s+' ('+cnt(s)+')</option>').join('')+'</select></div>'+
+ '<div class="tools noprint"><input data-rq placeholder="Cari berdasarkan nama, NIM/NIP, '+(room?'ruangan':'barang')+', atau lembaga…" value="'+esc(RQ)+'" style="flex:1;min-width:220px"><select data-rs><option value="">Semua status ('+rows.length+')</option>'+['Diproses','Disetujui','Ditolak'].map(s=>'<option value="'+s+'"'+(RST===s?' selected':'')+'>'+s+' ('+cnt(s)+')</option>').join('')+(room?'':[['L:belum','Belum dikembalikan',rows.filter(r=>['Dipinjam','Terlambat'].includes(loanOf(r))).length],['L:Terlambat','Terlambat',rows.filter(r=>loanOf(r)==='Terlambat').length],['L:Dikembalikan','Sudah dikembalikan',rows.filter(r=>loanOf(r)==='Dikembalikan').length]].map(o=>'<option value="'+o[0]+'"'+(RST===o[0]?' selected':'')+'>'+o[1]+' ('+o[2]+')</option>').join(''))+'</select></div>'+
  '<div class="tw"><table><thead><tr><th>No</th><th>No. Transaksi</th><th>'+(room?'Ruangan':'Barang')+'</th><th>Penanggung Jawab (NIM/NIP)</th><th>Lembaga / Prodi</th><th>Jadwal</th><th>Keperluan</th><th>Berkas</th><th>Status</th><th class="noprint">Verifikasi UMPER</th></tr></thead><tbody>'+
- (list.length?list.map((r,i)=>'<tr><td>'+(i+1)+'</td><td><code>'+r.id+'</code>'+(r.source==='chatbot'?'<br><small title="Diajukan lewat chatbot">🤖 chatbot</small>':'')+'</td><td>'+rname(r)+'</td><td><b>'+esc(r.name)+'</b><br><small>'+esc(r.nim)+'</small></td><td>'+esc(r.org)+'</td><td>'+jadwal(r)+'</td><td>'+esc(r.need||'-')+'</td><td>'+(r.spj||r.sik?'<small>📄 SPJ: '+esc(r.spj||'-')+'<br>📄 SIK: '+esc(r.sik||'-')+'</small>':'-')+'</td><td><span class="bd '+stCls[r.status]+'">'+r.status+'</span></td><td class="act noprint">'+
-  (r.status==='Diproses'?'<button class="btn sm gr0" data-res="ok" data-id="'+r.id+'">✓ Verifikasi (Setujui)</button> <button class="btn sm ylw" data-res="no" data-id="'+r.id+'">✕ Tolak</button> ':r.status==='Disetujui'?'<button class="btn sm ylw" data-res="back" data-id="'+r.id+'" title="Kembalikan ke Diproses">↺</button> ':'<button class="btn sm ylw" data-res="back" data-id="'+r.id+'" title="Kembalikan ke Diproses">↺</button> ')+
-  '<button class="btn sm" data-res="del" data-id="'+r.id+'">🗑</button></td></tr>').join(''):'<tr><td colspan="10" class="empty">Belum ada data peminjaman.</td></tr>')+'</tbody></table></div></div></div>'}
+ (list.length?list.map((r,i)=>'<tr><td>'+(i+1)+'</td><td><code>'+r.id+'</code>'+(r.source==='chatbot'?'<br><small title="Diajukan lewat chatbot">🤖 chatbot</small>':'')+'</td><td>'+rname(r)+'</td><td><b>'+esc(r.name)+'</b><br><small>'+esc(r.nim)+'</small></td><td>'+esc(r.org)+'</td><td>'+jadwal(r)+'</td><td>'+esc(r.need||'-')+'</td><td>'+(r.spj||r.sik?'<small>📄 SPJ: '+esc(r.spj||'-')+'<br>📄 SIK: '+esc(r.sik||'-')+'</small>':'-')+'</td><td><span class="bd '+stCls[r.status]+'">'+r.status+'</span>'+(r.status==='Ditolak'&&r.alasan?'<br><small class="why">Alasan: '+esc(alasanTxt(r))+'</small>':'')+loanBadge(r)+'</td><td class="act noprint">'+
+  (r.status==='Diproses'?'<button class="btn sm gr0" data-res="ok" data-id="'+r.id+'">✓ Verifikasi (Setujui)</button> <button class="btn sm ylw" data-res="no" data-id="'+r.id+'">✕ Tolak</button> ':r.status==='Disetujui'?(r.kind==='item'?(r.returned?'<button class="btn sm" data-res="unret" data-id="'+r.id+'" title="Batalkan status dikembalikan (tandai belum kembali)">↶ Belum</button> ':'<button class="btn sm gr0" data-res="ret" data-id="'+r.id+'" title="Tandai barang sudah dikembalikan">✓ Kembali</button> <button class="btn sm blue" data-res="rem" data-id="'+r.id+'" title="Kirim pengingat ke chatbot peminjam">🔔</button> '):'')+'<button class="btn sm ylw" data-res="back" data-id="'+r.id+'" title="Kembalikan ke Diproses">↺</button> ':'<button class="btn sm ylw" data-res="back" data-id="'+r.id+'" title="Kembalikan ke Diproses">↺</button> ')+
+  '<button class="btn sm" data-res="del" data-id="'+r.id+'">🗑</button></td></tr>').join(''):'<tr><td colspan="10" class="empty">Belum ada data peminjaman.</td></tr>')+'</tbody></table></div></div></div>'+rejectModal()}
 PAGES.staff.reservasi=resPage;
 
 // ---------- aksi ----------
@@ -37,16 +56,22 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-rt],[data-
  if(t.dataset.rt){RTAB=t.dataset.rt;RST='';RQ='';RMSG='';render();return}
  const a=t.dataset.res,id=t.dataset.id;
  if(a==='ok')setStatus(id,'Disetujui');
- else if(a==='no'){if(confirm('Tolak pengajuan '+id+'?'))setStatus(id,'Ditolak')}
+ else if(a==='no'){RJ={id,alasan:'',detail:''};render()}
+ else if(a==='rjx'){RJ=null;render()}
+ else if(a==='rjok'){if(RJ&&RJ.alasan&&(RJ.alasan!=='Lainnya'||RJ.detail.trim())){const w={alasan:RJ.alasan,detail:RJ.detail.trim()},i=RJ.id;RJ=null;setStatus(i,'Ditolak',w)}}
+ else if(a==='ret'||a==='unret'||a==='rem'){const l=RES(),r=l.find(z=>z.id===id);if(r){if(a==='ret'){r.returned=new Date().toISOString();delete r.remind}else if(a==='unret'){delete r.returned;delete r.retSeen}else r.remind=new Date().toISOString();saveRES(l);render()}}
  else if(a==='back')setStatus(id,'Diproses');
  else if(a==='del'){if(confirm('Hapus data '+id+'?')){const b=bookBase().filter(z=>z.res!==id);try{localStorage.setItem(K_BOOK,JSON.stringify(b))}catch(x){}saveRES(RES().filter(r=>r.id!==id));render()}}
  else if(a==='print')window.print();
- else if(a==='csv'){const rows=RES().filter(r=>r.kind===RTAB);csv('peminjaman-'+(RTAB==='room'?'ruangan':'barang')+'.csv',[['No. Transaksi',RTAB==='room'?'Ruangan':'Barang','Penanggung Jawab','NIM/NIP','No HP','Lembaga','Tanggal','Jam','Keperluan','Status','Sumber']].concat(rows.map(r=>[r.id,RTAB==='room'?r.gedung+' - '+r.ruang:r.itemNama+' x'+r.qty,r.name,r.nim,r.hp,r.org,r.dates.join(' s/d '),r.time,r.need,r.status,r.source])))}});
-document.addEventListener('change',e=>{if(e.target.matches('[data-rs]')){RST=e.target.value;render()}});
-document.addEventListener('input',e=>{const t=e.target;if(t.matches('[data-rq]')){RQ=t.value;const p=t.selectionStart;render();const n=document.querySelector('[data-rq]');n.focus();n.setSelectionRange(p,p)}});
+ else if(a==='csv'){const rows=RES().filter(r=>r.kind===RTAB);csv('peminjaman-'+(RTAB==='room'?'ruangan':'barang')+'.csv',[['No. Transaksi',RTAB==='room'?'Ruangan':'Barang','Penanggung Jawab','NIM/NIP','No HP','Lembaga','Tanggal','Jam','Keperluan','Status','Alasan Penolakan','Pengembalian','Sumber']].concat(rows.map(r=>[r.id,RTAB==='room'?r.gedung+' - '+r.ruang:r.itemNama+' x'+r.qty,r.name,r.nim,r.hp,r.org,r.dates.join(' s/d '),r.time,r.need,r.status,alasanTxt(r),loanOf(r),r.source])))}});
+document.addEventListener('change',e=>{if(e.target.matches('[data-rs]')){RST=e.target.value;render()}
+ if(e.target.matches('[data-rjsel]')&&RJ){RJ.alasan=e.target.value;render()}});
+document.addEventListener('input',e=>{const t=e.target;if(t.matches('[data-rjtxt]')&&RJ){RJ.detail=t.value;const b=document.querySelector('[data-res="rjok"]');if(b)b.disabled=!(RJ.alasan!=='Lainnya'||t.value.trim());return}
+ if(t.matches('[data-rq]')){RQ=t.value;const p=t.selectionStart;render();const n=document.querySelector('[data-rq]');n.focus();n.setSelectionRange(p,p)}});
 document.addEventListener('submit',e=>{const f=e.target;if(!f.matches('[data-res-form]'))return;e.preventDefault();
  const g=n=>f.elements[n].value.trim(),dt=g('dt'),ws=g('ws'),we=g('we'),room=RTAB==='room';let msg='';
- if(we<=ws)msg='Jam selesai harus setelah jam mulai.';
+ if(dt<isoL(new Date()))msg='Tanggal peminjaman tidak boleh sebelum hari ini.';
+ else if(we<=ws)msg='Jam selesai harus setelah jam mulai.';
  else if(room){const r=RM().find(x=>rl(x)===g('tgt')),w=roomWin(r,dt);
   if(!w)msg=r.r+' tidak tersedia pada '+fIso(dt)+' ('+(!roomFree(r,dt)?(isBlk('room',rl(r).toLowerCase(),dt)?'dinonaktifkan admin UMPER':'sudah dipesan'):'di luar jam layanan')+').';
   else if(+ws.slice(0,2)*60+ +ws.slice(3)<w[0]*60||+we.slice(0,2)*60+ +we.slice(3)>w[1]*60)msg=r.r+' hanya tersedia pukul '+hh(w[0])+' - '+hh(w[1])+' WIB pada tanggal itu.'}

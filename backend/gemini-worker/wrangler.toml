@@ -1,0 +1,10 @@
+# Deploy:  cd backend/gemini-worker && npx wrangler deploy
+# Key:     npx wrangler secret put GEMINI_API_KEY      (tempel key dari https://aistudio.google.com/apikey)
+name = "siumper-gemini"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+GEMINI_MODEL = "gemini-2.5-flash"
+# Daftar origin yang boleh memakai proxy ini (pisahkan dengan koma). Ubah jika alamat situs berbeda.
+ALLOWED_ORIGINS = "https://nyranazwa.github.io,http://localhost:8000"
