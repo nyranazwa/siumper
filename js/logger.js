@@ -23,7 +23,6 @@
  wrap('verify',(o,a)=>{const x=S.res,ok=x&&(S.kind==='room'?dys(x.date).every(i=>roomWin(x.room,i)):freeR(x.item,x.date)>=x.qty);
   rec('lainnya',!!ok,ok?'Reservasi '+(S.kind==='room'?'ruangan ':'barang ')+'dikirim':'Reservasi ditolak: tidak tersedia');return o.apply(null,a)});
  wrap('cancelRes',(o,a)=>{rec('lainnya',true,'Reservasi dibatalkan oleh pengguna');return o.apply(null,a)});
- wrap('statusCmd',(o,a)=>{rec('lainnya',true,'Status pengajuan dan pengembalian ditampilkan');return o.apply(null,a)});
  wrap('start',(o,a)=>{rec('lainnya',true,'Menu utama ditampilkan',350);return o.apply(null,a)});
  // saat data dimuat, gabungkan booking yang tersimpan dari sesi sebelumnya
  wrap('loadData',(o,a)=>{return o.apply(null,a).then(()=>{const b=rd(K_BOOK,null);if(Array.isArray(b))BOOK=b;STOCK0=JSON.parse(JSON.stringify(STOCK));HOME0=JSON.parse(JSON.stringify(HOME));const db=rd('siumper-dbr',null);if(db&&db.rooms&&db.items){ROOMS=dbrToRooms(db);ITEMS=dbrToItems(db);setBuildings()}applyStock(db||null)})});

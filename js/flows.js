@@ -3,7 +3,7 @@
 // Tanggal sebelum hari ini tidak boleh dicek maupun direservasi (hari ini = hari-H boleh).
 const isPast=d=>!!d&&dys(d).some(i=>i<isoNow());
 const pastMsg=(d,what)=>'⚠️ '+B('Tidak bisa '+what)+'\n\nTanggal '+fmt(dys(d).find(i=>i<isoNow()))+' sudah lewat. '+(what.startsWith('mengecek')?'Pengecekan':'Reservasi')+' hanya bisa untuk hari ini atau tanggal setelahnya.';
-const MENU=()=>bot('Selamat datang di layanan SiUMPER!\nGunakan:\n\n'+B('/Cek')+' untuk melihat ketersediaan ruangan dan barang,\n'+B('/Reservasi')+' untuk peminjaman ruangan dan barang,\n'+B('/Status')+' untuk melihat status pengajuan dan pengembalian barang');
+const MENU=()=>bot('Selamat datang di layanan SiUMPER!\nGunakan:\n\n'+B('/Cek')+' untuk melihat ketersediaan ruangan dan barang,\n'+B('/Reservasi')+' untuk peminjaman ruangan dan barang');
 function start(){S={st:'idle'};setState('idle');MENU()}
 function cek(){S.pre=null;S.preR=null;setState('idle');bot(B('Informasi ruangan dan barang')+'\n\n'+B('/Ruangan')+' - Untuk cek kesediaan ruangan\n'+B('/Barang')+' - Untuk cek kesediaan barang',[['/Ruangan',ruangan],['/Barang',barang]])}
 function ruangan(){S.pre=null;S.preR=null;S.flow='cek';bot('Silahkan pilih gedung yang kamu mau cek.',BUILDINGS.map(b=>[b,()=>{S.bld=b;askRoom()}]))}
@@ -84,17 +84,6 @@ async function doSPJ(spjName,sikName){setState('wait','');
    bot('✅ '+B('SPJ dan SIK valid')+'\n\nReservasi disetujui.\nNo. Transaksi: '+rec.id+'\nPeminjaman:\n'+where+'\nTanggal:\n'+x.date.txt+'\n\nStatus: '+B('DISETUJUI'),null,0)}
   else bot('❌ '+B('Reservasi tidak disetujui')+'\n\nNo. Transaksi: '+rec.id+(r&&r.alasan?'\nAlasan: '+esc(alasanTxt(r)):'')+'\n\nSilakan hubungi Admin UMPER atau ajukan ulang dengan /reservasi.',[['/Reservasi',reservasi]],0)},1000)}
 
-// ---------- /status: status pengajuan, alasan penolakan, dan pengembalian barang ----------
-function statusCmd(){S.pre=null;S.preR=null;setState('idle');
- const l=resRead(),mine=mineRead(),my=l.filter(r=>mine.includes(r.id)).sort((a,b)=>b.created.localeCompare(a.created)).slice(0,5);
- if(!my.length)return bot('📋 '+B('Status reservasi')+'\n\nBelum ada pengajuan dari chat ini. Gunakan /reservasi untuk mengajukan peminjaman.',[['/Reservasi',reservasi]]);
- const row=r=>{const what=r.kind==='room'?(r.gedung===r.ruang?r.ruang:r.ruang+' ('+r.gedung+')'):r.itemNama+' ×'+r.qty,ds=r.dates.length>1?fmt(r.dates[0])+' s/d '+fmt(lastD(r)):fmt(r.dates[0]),ln=loanOf(r);
-  let t='• '+B(r.id)+'\n  '+esc(what)+'\n  📅 '+ds+' · '+esc(r.time.replace(/\./g,':').replace('-',' - '))+' WIB\n  Status: '+B(r.status.toUpperCase());
-  if(r.status==='Ditolak'&&r.alasan)t+='\n  Alasan: '+esc(alasanTxt(r));
-  if(ln)t+='\n  Pengembalian: '+B(ln==='Terlambat'?'TERLAMBAT '+lateDays(r)+' hari':ln==='Dikembalikan'?'Sudah dikembalikan':'Belum dikembalikan')+(ln==='Dikembalikan'?'':'\n  Batas kembali: '+fmt(lastD(r))+(HOME[r.item]?' (ke '+esc(HOME[r.item])+')':''));
-  return t};
- bot('📋 '+B('Status reservasi')+'\n\n'+my.map(row).join('\n\n')+(my.some(r=>['Dipinjam','Terlambat'].includes(loanOf(r)))?'\n\n🔔 Kami akan mengingatkan sebelum dan saat batas pengembalian.':''))}
-
 // ---------- Pengingat pengembalian + kabar pengembalian ----------
 // Prototype: dicek berkala selama chat terbuka. Di Telegram asli ini dikirim bot dari backend (mis. penjadwal harian jam 08.00).
 function remindTick(){const l=resRead(),mine=mineRead();let ch=false;const out=[];
@@ -107,4 +96,4 @@ function remindTick(){const l=resRead(),mine=mineRead();let ch=false;const out=[
    out.push(st==='h1'?'⏰ '+B('Pengingat pengembalian')+'\n\nBatas pengembalian '+esc(what)+' ('+r.id+') adalah '+B('besok')+' ('+fmt(lastD(r))+'). Jangan lupa dikembalikan'+home+'.'
     :st==='hariH'?'⏰ '+B('Pengingat pengembalian')+'\n\n'+B('Hari ini')+' batas pengembalian '+esc(what)+' ('+r.id+'). Silakan kembalikan'+home+'.'
     :'⚠️ '+B('Barang belum dikembalikan')+'\n\n'+esc(what)+' ('+r.id+') '+B('terlambat '+lateDays(r)+' hari')+'. Segera kembalikan'+home+'.')}});
- if(ch){resWrite(l);out.forEach(t=>bot(t,[['/Status',statusCmd]]))}}
+ if(ch){resWrite(l);out.forEach(t=>bot(t))}}
