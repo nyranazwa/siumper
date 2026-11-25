@@ -4,7 +4,7 @@
 // API key Gemini HANYA ada di sini (secret GEMINI_API_KEY), tidak pernah dikirim ke browser.
 // Gemini hanya memahami pesan. Ketersediaan, bentrok, dan persetujuan tetap dihitung dari data oleh chatbot/dashboard.
 
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+const DEFAULT_MODEL = 'gemini-3.5-flash-lite'; // gemini-2.5-* sudah tidak tersedia untuk akun baru (404)
 const DEFAULT_ORIGINS = 'https://nyranazwa.github.io,http://localhost:8000,http://localhost:5500,http://127.0.0.1:8000';
 const MAX_TEXT = 600, MAX_LIST = 300;
 
@@ -86,7 +86,7 @@ export default {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: SYSTEM }] },
           contents: [{ role: 'user', parts: [{ text: JSON.stringify(payload) }] }],
-          generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: SCHEMA, maxOutputTokens: 512 },
+          generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: SCHEMA, maxOutputTokens: 1024 },
         }),
       });
     } catch { return json({ ok: false, error: 'Gemini tidak terjangkau' }, 502, h); }

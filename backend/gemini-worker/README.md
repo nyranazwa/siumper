@@ -18,7 +18,7 @@ Gemini hanya *memahami* pesan; tersedia/tidak, bentrok, jam layanan, dan tanggal
    ```
 4. Jika situs bukan `https://nyranazwa.github.io`, ubah `ALLOWED_ORIGINS` di `wrangler.toml`.
 
-Model default `gemini-2.5-flash` (ubah lewat `GEMINI_MODEL` di `wrangler.toml`).
+Model default `gemini-3.5-flash-lite` (cepat dan murah; sudah diuji). `gemini-2.5-*` sudah tidak tersedia untuk akun baru. Model "thinking" yang lebih besar (mis. `gemini-3.5-flash`) bisa memotong JSON; bila dipakai, naikkan `maxOutputTokens`. Ubah lewat `GEMINI_MODEL` di `wrangler.toml`.
 
 ## Uji di laptop tanpa Cloudflare
 ```
