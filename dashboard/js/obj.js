@@ -35,6 +35,9 @@ function oStaf(){const now=new Date(),today=isoL(now),A=assets(),logs=allLogs(),
  const wait=r=>{const m=Math.max(0,Math.floor((now-new Date(r.created))/60000));return m<1?'Baru masuk':m<60?m+' menit':m<1440?Math.floor(m/60)+' jam':Math.floor(m/1440)+' hari '+Math.floor(m%1440/60)+' jam'};
  const antre='<div class="tw scroll"><table><thead><tr><th>#</th><th>No. Transaksi</th><th>Jenis</th><th>Pemohon</th><th>Dimohon untuk</th><th>Menunggu</th></tr></thead><tbody>'+
   (pend.length?pend.map((r,i)=>'<tr><td>'+(i+1)+'</td><td><code>'+r.id+'</code></td><td>'+(r.kind==='room'?'Ruangan':'Barang')+'</td><td><b>'+esc(r.name)+'</b><br><small>'+esc(r.org)+'</small></td><td>'+rname(r)+'</td><td>'+(i===0?'<b class="red">'+wait(r)+'</b> (terlama)':wait(r))+'</td></tr>').join(''):'<tr><td colspan="6" class="empty">Tidak ada pengajuan yang menunggu. 🎉</td></tr>')+'</tbody></table></div>';
+ // S-6 barang belum dikembalikan (status pengembalian)
+ const out=RES().filter(r=>['Dipinjam','Terlambat'].includes(loanOf(r))).sort((a,b)=>(loanOf(a)==='Terlambat'?0:1)-(loanOf(b)==='Terlambat'?0:1)||lastDate(a).localeCompare(lastDate(b))),late=out.filter(r=>loanOf(r)==='Terlambat');
+ const pinjam='<div class="tw scroll"><table><thead><tr><th>Barang</th><th>Peminjam</th><th>Batas kembali</th><th>Status</th></tr></thead><tbody>'+(out.length?out.map(r=>'<tr><td>'+esc(r.itemNama)+' <small>× '+r.qty+'</small></td><td><b>'+esc(r.name)+'</b><br><small>'+esc(r.org)+'</small></td><td>'+fIso(lastDate(r))+'</td><td><span class="bd '+loanCls[loanOf(r)]+'">'+(loanOf(r)==='Terlambat'?'Terlambat '+lateDays(r)+' hari':'Dipinjam')+'</span></td></tr>').join(''):'<tr><td colspan="4" class="empty">Semua barang sudah dikembalikan.</td></tr>')+'</tbody></table></div>';
  // S-2 jadwal ruangan 7 hari
  const days=Array.from({length:7},(_,i)=>addD(now,i)),iso=days.map(isoL),rooms=RM().filter(r=>!OBLD||r.b===OBLD),blds=[...new Set(RM().map(r=>r.b))];
  const apr=RES().filter(x=>x.kind==='room'&&x.status==='Disetujui'),busy=(r,i)=>!roomFree(r,i)||apr.some(x=>roomKey(x)===rl(r).toLowerCase()&&x.dates.includes(i));
@@ -52,12 +55,14 @@ function oStaf(){const now=new Date(),today=isoL(now),A=assets(),logs=allLogs(),
  const lengAll=A.length?Math.round(A.filter(a=>/^DBR-\d{4}-\d{4}$/.test(a.code||'')).length/A.length*100):0;
  const lengkap=Object.entries(g).map(([k,e])=>({label:k.replace(/\s*\(.*\)/,''),v:Math.round(e.ok/e.t*100),color:e.ok/e.t>=.9?'#16915a':e.ok/e.t>=.7?'#f0a020':'#e5484d'})).sort((a,b)=>a.v-b.v);
  return banner('Abel','Daftar pekerjaan yang perlu ditindaklanjuti hari ini.')+
- '<div class="kpis">'+kpi('📝','r','Menunggu verifikasi',pend.length,pend.length?'Terlama: '+wait(pend[0]):'Tidak ada antrean')+
+ '<div class="kpis k5">'+kpi('📝','r','Menunggu verifikasi',pend.length,pend.length?'Terlama: '+wait(pend[0]):'Tidak ada antrean')+
   kpi('🛡️','b','Pengajuan bentrok ditolak sistem',bentrok,'bulan ini, dicegah otomatis')+
   kpi('📦','r','Barang habis / menipis',stok.length,stok.filter(x=>x.st==='habis').length+' habis hari ini')+
-  kpi('🏷️','g','Kelengkapan kode stiker',lengAll+'%','seluruh barang DBR')+'</div>'+
+  kpi('🏷️','g','Kelengkapan kode stiker',lengAll+'%','seluruh barang DBR')+
+  kpi('↩️',late.length?'r':'g','Barang belum dikembalikan',out.length,late.length?'<b class="red">'+late.length+' terlambat</b>':'Tidak ada yang terlambat')+'</div>'+
  '<div class="g2"><div class="card"><div class="ch"><h3>📝 Antrean Verifikasi Reservasi</h3><a href="#/reservasi">Buka Reservasi →</a></div>'+antre+'</div>'+
  '<div class="card"><div class="ch"><h3>📦 Barang Habis / Menipis</h3><a href="#/barang">Ketersediaan Barang →</a></div>'+brg+'</div></div>'+
+ '<div class="card"><div class="ch"><h3>↩️ Peminjaman Barang Belum Dikembalikan</h3><a href="#/reservasi" data-rt="item">Buka Reservasi →</a></div>'+pinjam+'</div>'+
  '<div class="card"><div class="ch"><h3>🗓️ Jadwal Ruangan 7 Hari ke Depan</h3><a href="#/ruangan">Ketersediaan Ruangan →</a></div>'+leg([['Kosong','#16915a'],['Terisi / dinonaktifkan','#e5484d'],['Akhir pekan boleh dipesan (perlu persetujuan)','#9aa3b0']])+sched+'</div>'+
  '<div class="card"><div class="ch"><h3>✅ Kelengkapan Kode Stiker per Gedung</h3><a href="#/dbr">Kelola DBR →</a></div><p class="sub" style="margin:0 0 8px">Persentase barang DBR yang kode stikernya terisi dan berformat benar.</p>'+oHbar(lengkap,{max:100,fmt:v=>v+'%'})+'</div>'}
 

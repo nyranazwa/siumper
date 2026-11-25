@@ -138,3 +138,14 @@ small{color:var(--mut)}
 .hv{text-align:left}
 @media(max-width:640px){.hr{grid-template-columns:minmax(90px,38%) 1fr 40px;gap:8px;font-size:12px}}
 .hl{white-space:normal;line-height:1.25}
+
+/* dialog tolak pengajuan + alasan + status pengembalian */
+.rjov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:grid;place-items:center;padding:16px}
+.mbox{background:var(--card);border-radius:12px;padding:20px;width:min(440px,100%);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.mbox h3{margin:0 0 4px}.mbox label{display:block;font-size:12.5px;font-weight:600;margin-top:10px}
+.mbox select,.mbox textarea{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);resize:vertical}
+.macts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.macts .btn[disabled]{opacity:.45;cursor:not-allowed}
+.why{color:var(--bad);display:inline-block;max-width:200px;line-height:1.3}
+.kpis.k5{grid-template-columns:repeat(5,1fr)}
+@media(max-width:1180px){.kpis.k5{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.kpis.k5{grid-template-columns:1fr}}

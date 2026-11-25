@@ -1,6 +1,6 @@
 // Alur percakapan bot: /start, /cek, /reservasi.
 // ---------- FLOWS ----------
-const MENU=()=>bot('Selamat datang di layanan SiUMPER!\nGunakan:\n\n'+B('/Cek')+' untuk melihat ketersediaan ruangan dan barang,\n'+B('/Reservasi')+' untuk peminjaman ruangan dan barang');
+const MENU=()=>bot('Selamat datang di layanan SiUMPER!\nGunakan:\n\n'+B('/Cek')+' untuk melihat ketersediaan ruangan dan barang,\n'+B('/Reservasi')+' untuk peminjaman ruangan dan barang,\n'+B('/Status')+' untuk melihat status pengajuan dan pengembalian barang');
 function start(){S={st:'idle'};setState('idle');MENU()}
 function cek(){S.pre=null;S.preR=null;setState('idle');bot(B('Informasi ruangan dan barang')+'\n\n'+B('/Ruangan')+' - Untuk cek kesediaan ruangan\n'+B('/Barang')+' - Untuk cek kesediaan barang',[['/Ruangan',ruangan],['/Barang',barang]])}
 function ruangan(){S.pre=null;S.preR=null;S.flow='cek';bot('Silahkan pilih gedung yang kamu mau cek.',BUILDINGS.map(b=>[b,()=>{S.bld=b;askRoom()}]))}
@@ -52,9 +52,10 @@ function doRes(t){const x=parseRes(t),miss=[];if(S.pre&&S.kind==='item'){x.item=
  if(!x.date)miss.push('Tanggal (mis. 10 Oktober 2026)');if(!x.time)miss.push('Waktu (mis. 08.00-12.00)');if(!x.name)miss.push('Nama');if(!x.id)miss.push('NIM/NIP');if(!x.org)miss.push('Organisasi');
  if(miss.length)return bot('⚠️ Data belum lengkap. Mohon lengkapi:\n• '+miss.join('\n• ')+'\n\nKirim ulang detail peminjaman dalam satu pesan.');
  if(S.kind==='room'&&x.room&&x.time){const tt=x.time.split('-').map(z=>z.replace('.',':')),ww=winFor(x.room,dys(x.date))||x.room.h,o=ww[0],c=ww[1];if(tmin(tt[0])<o*60||tmin(tt[1])>c*60)return bot('⚠️ '+B('Waktu yang dipilih tidak tersedia')+'\n\n'+x.room.r+' hanya tersedia pukul '+winTxt(x.room)+'.\nSilakan kirim ulang dengan waktu yang sesuai.')}confirmRes(x)}
-function confirmRes(x){S.res=x;setState('confirm','Tekan Kirim atau Edit');
+function confirmRes(x){S.res=x;setState('confirm','Tekan Kirim, Edit, atau Batal');
  const lines=S.kind==='room'?'Gedung: '+x.room.b.replace('Gedung ','')+'\nRuangan: '+x.room.r:'Barang: '+STOCK[x.item].n+'\nJumlah: '+x.qty;
- bot('🔍 '+B('Data Reservasi')+'\n\n'+lines+'\nTanggal: '+x.date.txt+'\nWaktu: '+x.time+'\nNama: '+x.name+'\nOrganisasi: '+x.org+'\n\nData sudah benar?',[['✅ Kirim',verify],['✏️ Edit',()=>openForm('res',x)]])}
+ bot('🔍 '+B('Data Reservasi')+'\n\n'+lines+'\nTanggal: '+x.date.txt+'\nWaktu: '+x.time+'\nNama: '+x.name+'\nOrganisasi: '+x.org+'\n\nData sudah benar?',[['✅ Kirim',verify],['✏️ Edit',()=>openForm('res',x)],['❌ Batal',cancelRes]])}
+function cancelRes(){S.res=null;S.pre=null;S.preR=null;S.upCard=null;setState('idle');bot('❌ '+B('Reservasi dibatalkan')+'\n\nPengajuan tidak dikirim dan tidak ada data yang disimpan. Gunakan /reservasi untuk mengajukan lagi.',[['/Reservasi',reservasi],['/Cek',cek]])}
 async function verify(){const x=S.res;S.pre=null;S.preR=null;
  const ok=S.kind==='room'?dys(x.date).every(i=>roomWin(x.room,i)):freeR(x.item,x.date)>=x.qty;
  if(!ok){setState('idle');return bot('🔍 '+B('Memverifikasi data...')+'\n\n✅ Data pemohon lengkap\n❌ '+(S.kind==='room'?'Ruangan':'Barang')+' tidak tersedia pada tanggal tersebut\n\nSilakan cek ketersediaan lain dengan /cek.',[['/Cek',cek]])}
@@ -70,9 +71,34 @@ function uploadCard(){
   el.querySelectorAll('input,button').forEach(x=>x.disabled=true);me('📄 SPJ: '+a.name+'\n📄 SIK: '+b.name);S.upCard=null;doSPJ(a.name,b.name)};
  S.upCard={add(f){const k=!ins.spj.files[0]?'spj':!ins.sik.files[0]?'sik':null;if(!k)return null;const dt=new DataTransfer();dt.items.add(f);ins[k].files=dt.files;ins[k].dispatchEvent(new Event('change'));return k}}}
 async function doSPJ(spjName,sikName){setState('wait','');
- const x=S.res,kind=S.kind,rec=resRecord(x,kind,spjName,sikName);resWrite(resRead().concat(rec));
+ const x=S.res,kind=S.kind,rec=resRecord(x,kind,spjName,sikName);resWrite(resRead().concat(rec));mineAdd(rec.id);
  await bot('📄 '+B('Verifikasi berkas')+'\n\nNo. Transaksi: '+rec.id+'\nBerkas diterima:\n📄 SPJ: '+esc(spjName)+'\n📄 SIK: '+esc(sikName)+'\n\nMemeriksa:\n✅ Identitas pemohon\n✅ Kesesuaian kegiatan\n✅ Kelengkapan dokumen SPJ dan SIK\n\nStatus: '+B('DIPROSES')+'\nMenunggu verifikasi Staf UMPER. Jawaban akan dikirim di sini setelah pengajuan diverifikasi di dashboard.');
  const iv=setInterval(()=>{const r=resRead().find(z=>z.id===rec.id);if(r&&r.status==='Diproses')return;clearInterval(iv);BOOK=bookRead();setState('idle');
   if(r&&r.status==='Disetujui'){add('day','Hari berikutnya');const where=kind==='room'?rl(x.room):STOCK[x.item].n+' x'+x.qty+'\nAmbil di: '+HOME[x.item];
    bot('✅ '+B('SPJ dan SIK valid')+'\n\nReservasi disetujui.\nNo. Transaksi: '+rec.id+'\nPeminjaman:\n'+where+'\nTanggal:\n'+x.date.txt+'\n\nStatus: '+B('DISETUJUI'),null,0)}
-  else bot('❌ '+B('Reservasi tidak disetujui')+'\n\nNo. Transaksi: '+rec.id+'\nSilakan hubungi Admin UMPER atau ajukan ulang dengan /reservasi.',null,0)},1000)}
+  else bot('❌ '+B('Reservasi tidak disetujui')+'\n\nNo. Transaksi: '+rec.id+(r&&r.alasan?'\nAlasan: '+esc(alasanTxt(r)):'')+'\n\nSilakan hubungi Admin UMPER atau ajukan ulang dengan /reservasi.',[['/Reservasi',reservasi]],0)},1000)}
+
+// ---------- /status: status pengajuan, alasan penolakan, dan pengembalian barang ----------
+function statusCmd(){S.pre=null;S.preR=null;setState('idle');
+ const l=resRead(),mine=mineRead(),my=l.filter(r=>mine.includes(r.id)).sort((a,b)=>b.created.localeCompare(a.created)).slice(0,5);
+ if(!my.length)return bot('📋 '+B('Status reservasi')+'\n\nBelum ada pengajuan dari chat ini. Gunakan /reservasi untuk mengajukan peminjaman.',[['/Reservasi',reservasi]]);
+ const row=r=>{const what=r.kind==='room'?(r.gedung===r.ruang?r.ruang:r.ruang+' ('+r.gedung+')'):r.itemNama+' ×'+r.qty,ds=r.dates.length>1?fmt(r.dates[0])+' s/d '+fmt(lastD(r)):fmt(r.dates[0]),ln=loanOf(r);
+  let t='• '+B(r.id)+'\n  '+esc(what)+'\n  📅 '+ds+' · '+esc(r.time.replace(/\./g,':').replace('-',' - '))+' WIB\n  Status: '+B(r.status.toUpperCase());
+  if(r.status==='Ditolak'&&r.alasan)t+='\n  Alasan: '+esc(alasanTxt(r));
+  if(ln)t+='\n  Pengembalian: '+B(ln==='Terlambat'?'TERLAMBAT '+lateDays(r)+' hari':ln==='Dikembalikan'?'Sudah dikembalikan':'Belum dikembalikan')+(ln==='Dikembalikan'?'':'\n  Batas kembali: '+fmt(lastD(r))+(HOME[r.item]?' (ke '+esc(HOME[r.item])+')':''));
+  return t};
+ bot('📋 '+B('Status reservasi')+'\n\n'+my.map(row).join('\n\n')+(my.some(r=>['Dipinjam','Terlambat'].includes(loanOf(r)))?'\n\n🔔 Kami akan mengingatkan sebelum dan saat batas pengembalian.':''))}
+
+// ---------- Pengingat pengembalian + kabar pengembalian ----------
+// Prototype: dicek berkala selama chat terbuka. Di Telegram asli ini dikirim bot dari backend (mis. penjadwal harian jam 08.00).
+function remindTick(){const l=resRead(),mine=mineRead();let ch=false;const out=[];
+ l.forEach(r=>{if(!mine.includes(r.id)||r.kind!=='item'||r.status!=='Disetujui')return;
+  const what=r.itemNama+' ×'+r.qty,home=HOME[r.item]?' ke '+esc(HOME[r.item]):' ke Staf UMPER';
+  if(r.returned){if(!r.retSeen){r.retSeen=1;ch=true;out.push('✅ '+B('Pengembalian tercatat')+'\n\n'+esc(what)+' ('+r.id+') sudah dicatat dikembalikan oleh Staf UMPER. Terima kasih!')}return}
+  if(r.remind&&r.remind!==r.remindSeen){r.remindSeen=r.remind;ch=true;out.push('🔔 '+B('Pengingat dari Staf UMPER')+'\n\nMohon segera kembalikan '+esc(what)+' ('+r.id+')'+home+'.\nBatas pengembalian: '+fmt(lastD(r))+'.')}
+  const st=lateDays(r)>0?'telat':lastD(r)===isoNow()?'hariH':lastD(r)===isoNow(1)?'h1':'';
+  if(st&&!(r.reminded||[]).includes(st)){r.reminded=(r.reminded||[]).concat(st);ch=true;
+   out.push(st==='h1'?'⏰ '+B('Pengingat pengembalian')+'\n\nBatas pengembalian '+esc(what)+' ('+r.id+') adalah '+B('besok')+' ('+fmt(lastD(r))+'). Jangan lupa dikembalikan'+home+'.'
+    :st==='hariH'?'⏰ '+B('Pengingat pengembalian')+'\n\n'+B('Hari ini')+' batas pengembalian '+esc(what)+' ('+r.id+'). Silakan kembalikan'+home+'.'
+    :'⚠️ '+B('Barang belum dikembalikan')+'\n\n'+esc(what)+' ('+r.id+') '+B('terlambat '+lateDays(r)+' hari')+'. Segera kembalikan'+home+'.')}});
+ if(ch){resWrite(l);out.forEach(t=>bot(t,[['/Status',statusCmd]]))}}
