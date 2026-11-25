@@ -62,6 +62,15 @@ let RES0=[];
 const _ls=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const resRead=()=>_ls('siumper-res')||RES0;
 const resWrite=l=>{try{localStorage.setItem('siumper-res',JSON.stringify(l))}catch(e){}};
+// Reservasi milik chat ini (setara chat id Telegram). Hanya lokal, tidak disinkronkan ke cloud.
+const mineRead=()=>_ls('siumper-mine')||[];
+const mineAdd=id=>{try{localStorage.setItem('siumper-mine',JSON.stringify(mineRead().concat(id)))}catch(e){}};
+const isoNow=(o=0)=>{const d=new Date();d.setDate(d.getDate()+o);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const lastD=r=>r.dates[r.dates.length-1];
+const lateDays=r=>Math.max(0,Math.round((new Date(isoNow()+'T00:00:00')-new Date(lastD(r)+'T00:00:00'))/864e5));
+// status pengembalian barang: hanya untuk peminjaman barang yang disetujui
+const loanOf=r=>{if(r.kind!=='item'||r.status!=='Disetujui')return '';if(r.returned)return 'Dikembalikan';const t=isoNow();return t>lastD(r)?'Terlambat':t>=r.dates[0]?'Dipinjam':'Dijadwalkan'};
+const alasanTxt=r=>r.alasan?(r.alasan==='Lainnya'&&r.alasanDetail?r.alasanDetail:r.alasan+(r.alasanDetail?' - '+r.alasanDetail:'')):'';
 // Blokir manual oleh admin UMPER (dibuat di dashboard): {kind:'room'|'item',key,from,to,note}. to kosong = tanpa batas akhir.
 const blockRead=()=>_ls('siumper-block')||[];
 const isBlk=(kind,key,iso)=>blockRead().some(b=>b.kind===kind&&b.key===key&&(!b.from||iso>=b.from)&&(!b.to||iso<=b.to));
@@ -69,6 +78,7 @@ const bookRead=()=>_ls('siumper-bookings')||JSON.parse(JSON.stringify(BOOK));
 const bookWrite=b=>{try{localStorage.setItem('siumper-bookings',JSON.stringify(b))}catch(e){}};
 function resRecord(x,kind,spj,sik){const d=new Date(),ymd=d.toISOString().slice(0,10).replace(/-/g,''),l=resRead();let n;do{n=String(100+Math.floor(Math.random()*900))}while(l.some(r=>r.id.endsWith('-'+n)));
  const rec={id:'TRX-'+(kind==='room'?'RG':'BR')+'-'+ymd+'-'+n,kind,created:d.toISOString(),name:x.name,nim:x.id,hp:x.phone||'',org:x.org,need:x.need||'',dates:x.date.days||[x.date.iso],time:x.time,status:'Diproses',spj,sik,source:'chatbot'};
+ if(x.nlp)rec.nlp='tanpa_koreksi';else if(S.nlpEdit)rec.nlp='dikoreksi';S.nlpEdit=false; // ukuran IT-4 (formulir NLP tanpa koreksi)
  if(kind==='room'){rec.gedung=x.room.b;rec.ruang=x.room.r}else{rec.item=x.item;rec.itemNama=STOCK[x.item].n;rec.qty=x.qty}return rec}
 function resApprove(id,status){const l=resRead(),r=l.find(z=>z.id===id);if(!r)return;r.status=status;if(status==='Diproses')delete r.verified;else r.verified=new Date().toISOString();resWrite(l);
  const b=bookRead().filter(z=>z.res!==id);

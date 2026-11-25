@@ -35,6 +35,9 @@ function oStaf(){const now=new Date(),today=isoL(now),A=assets(),logs=allLogs(),
  const wait=r=>{const m=Math.max(0,Math.floor((now-new Date(r.created))/60000));return m<1?'Baru masuk':m<60?m+' menit':m<1440?Math.floor(m/60)+' jam':Math.floor(m/1440)+' hari '+Math.floor(m%1440/60)+' jam'};
  const antre='<div class="tw scroll"><table><thead><tr><th>#</th><th>No. Transaksi</th><th>Jenis</th><th>Pemohon</th><th>Dimohon untuk</th><th>Menunggu</th></tr></thead><tbody>'+
   (pend.length?pend.map((r,i)=>'<tr><td>'+(i+1)+'</td><td><code>'+r.id+'</code></td><td>'+(r.kind==='room'?'Ruangan':'Barang')+'</td><td><b>'+esc(r.name)+'</b><br><small>'+esc(r.org)+'</small></td><td>'+rname(r)+'</td><td>'+(i===0?'<b class="red">'+wait(r)+'</b> (terlama)':wait(r))+'</td></tr>').join(''):'<tr><td colspan="6" class="empty">Tidak ada pengajuan yang menunggu. 🎉</td></tr>')+'</tbody></table></div>';
+ // S-6 barang belum dikembalikan (status pengembalian)
+ const out=RES().filter(r=>['Dipinjam','Terlambat'].includes(loanOf(r))).sort((a,b)=>(loanOf(a)==='Terlambat'?0:1)-(loanOf(b)==='Terlambat'?0:1)||lastDate(a).localeCompare(lastDate(b))),late=out.filter(r=>loanOf(r)==='Terlambat');
+ const pinjam='<div class="tw scroll"><table><thead><tr><th>Barang</th><th>Peminjam</th><th>Batas kembali</th><th>Status</th></tr></thead><tbody>'+(out.length?out.map(r=>'<tr><td>'+esc(r.itemNama)+' <small>× '+r.qty+'</small></td><td><b>'+esc(r.name)+'</b><br><small>'+esc(r.org)+'</small></td><td>'+fIso(lastDate(r))+'</td><td><span class="bd '+loanCls[loanOf(r)]+'">'+(loanOf(r)==='Terlambat'?'Terlambat '+lateDays(r)+' hari':'Dipinjam')+'</span></td></tr>').join(''):'<tr><td colspan="4" class="empty">Semua barang sudah dikembalikan.</td></tr>')+'</tbody></table></div>';
  // S-2 jadwal ruangan 7 hari
  const days=Array.from({length:7},(_,i)=>addD(now,i)),iso=days.map(isoL),rooms=RM().filter(r=>!OBLD||r.b===OBLD),blds=[...new Set(RM().map(r=>r.b))];
  const apr=RES().filter(x=>x.kind==='room'&&x.status==='Disetujui'),busy=(r,i)=>!roomFree(r,i)||apr.some(x=>roomKey(x)===rl(r).toLowerCase()&&x.dates.includes(i));
@@ -52,12 +55,14 @@ function oStaf(){const now=new Date(),today=isoL(now),A=assets(),logs=allLogs(),
  const lengAll=A.length?Math.round(A.filter(a=>/^DBR-\d{4}-\d{4}$/.test(a.code||'')).length/A.length*100):0;
  const lengkap=Object.entries(g).map(([k,e])=>({label:k.replace(/\s*\(.*\)/,''),v:Math.round(e.ok/e.t*100),color:e.ok/e.t>=.9?'#16915a':e.ok/e.t>=.7?'#f0a020':'#e5484d'})).sort((a,b)=>a.v-b.v);
  return banner('Abel','Daftar pekerjaan yang perlu ditindaklanjuti hari ini.')+
- '<div class="kpis">'+kpi('📝','r','Menunggu verifikasi',pend.length,pend.length?'Terlama: '+wait(pend[0]):'Tidak ada antrean')+
+ '<div class="kpis k5">'+kpi('📝','r','Menunggu verifikasi',pend.length,pend.length?'Terlama: '+wait(pend[0]):'Tidak ada antrean')+
   kpi('🛡️','b','Pengajuan bentrok ditolak sistem',bentrok,'bulan ini, dicegah otomatis')+
   kpi('📦','r','Barang habis / menipis',stok.length,stok.filter(x=>x.st==='habis').length+' habis hari ini')+
-  kpi('🏷️','g','Kelengkapan kode stiker',lengAll+'%','seluruh barang DBR')+'</div>'+
+  kpi('🏷️','g','Kelengkapan kode stiker',lengAll+'%','seluruh barang DBR')+
+  kpi('↩️',late.length?'r':'g','Barang belum dikembalikan',out.length,late.length?'<b class="red">'+late.length+' terlambat</b>':'Tidak ada yang terlambat')+'</div>'+
  '<div class="g2"><div class="card"><div class="ch"><h3>📝 Antrean Verifikasi Reservasi</h3><a href="#/reservasi">Buka Reservasi →</a></div>'+antre+'</div>'+
  '<div class="card"><div class="ch"><h3>📦 Barang Habis / Menipis</h3><a href="#/barang">Ketersediaan Barang →</a></div>'+brg+'</div></div>'+
+ '<div class="card"><div class="ch"><h3>↩️ Peminjaman Barang Belum Dikembalikan</h3><a href="#/reservasi" data-rt="item">Buka Reservasi →</a></div>'+pinjam+'</div>'+
  '<div class="card"><div class="ch"><h3>🗓️ Jadwal Ruangan 7 Hari ke Depan</h3><a href="#/ruangan">Ketersediaan Ruangan →</a></div>'+leg([['Kosong','#16915a'],['Terisi / dinonaktifkan','#e5484d'],['Akhir pekan boleh dipesan (perlu persetujuan)','#9aa3b0']])+sched+'</div>'+
  '<div class="card"><div class="ch"><h3>✅ Kelengkapan Kode Stiker per Gedung</h3><a href="#/dbr">Kelola DBR →</a></div><p class="sub" style="margin:0 0 8px">Persentase barang DBR yang kode stikernya terisi dan berformat benar.</p>'+oHbar(lengkap,{max:100,fmt:v=>v+'%'})+'</div>'}
 
@@ -70,7 +75,8 @@ function oIT(){const logs=recent(allLogs()),today=sod(new Date()),P=PERIOD,from=
  const whyRows=Object.entries(why).sort((a,b)=>b[1]-a[1]).slice(0,4);
  // IT-2 waktu respons
  const tT=D.dashboard.targetMs/1000,per=days.map(d=>inR(cur,d,addD(d,1))),txt=fillGaps(per.map(x=>x.length?oAvgS(x):null),0),pT=cur.length?cur.filter(l=>l.ms/1000<=tT).length/cur.length*100:0,pTp=prv.length?prv.filter(l=>l.ms/1000<=tT).length/prv.length*100:0;
- // IT-4 formulir tanpa koreksi (simulasi)
+ // IT-4 formulir tanpa koreksi: terukur dari reservasi chatbot yang memakai NLP; jika belum ada, memakai data simulasi
+ const nlA=RES().filter(r=>r.nlp),nlN=nlA.length,nlOk=nlA.filter(r=>r.nlp==='tanpa_koreksi').length,nlPct=nlN?Math.round(nlOk/nlN*100):0;
  const ft=ex.formTanpaKoreksi||[],wl=ft.map((_,i)=>fmtD(addD(today,-7*(ft.length-1-i))));
  // IT-5 sinkronisasi
  let ls=null;try{ls=localStorage.getItem('siumper-lastsync')}catch(e){}const last=ls?new Date(ls):SYNC,fail=+(localStorage.getItem('siumper-syncfail')||0),online=navigator.onLine&&SRC_OK;
@@ -79,7 +85,8 @@ function oIT(){const logs=recent(allLogs()),today=sod(new Date()),P=PERIOD,from=
  const mxC=Math.ceil(Math.max(...gw,lim/4)/20000)*20000;
  const kpis='<div class="kpis">'+kpi('✔','g','Permintaan berhasil (IT-1)',Math.round(c.rate)+'%',delta(c.rate-p.rate,true,'%',' dari periode sebelumnya'))+
   kpi('⚡','b','Respons ≤ '+tT+' detik (IT-2)',Math.round(pT)+'%',delta(pT-pTp,true,'%',' dari periode sebelumnya'))+
-  kpi('📝','b','Formulir tanpa koreksi (IT-4)',(ft.length?ft[ft.length-1]:0)+'%',ft.length>1?delta(ft[ft.length-1]-ft[ft.length-2],true,'%',' dari minggu lalu')+' '+SIM:SIM)+
+  (nlN?kpi('📝','b','Formulir tanpa koreksi (IT-4)',nlPct+'%','<b>terukur</b>: '+nlOk+' dari '+nlN+' reservasi via NLP')
+   :kpi('📝','b','Formulir tanpa koreksi (IT-4)',(ft.length?ft[ft.length-1]:0)+'%',ft.length>1?delta(ft[ft.length-1]-ft[ft.length-2],true,'%',' dari minggu lalu')+' '+SIM:SIM))+
   '<div class="card kpi"><div class="ico '+(online?'g':'r')+'">'+(online?'🟢':'🔴')+'</div><div><div class="l">Terakhir sinkron (IT-5)</div><div class="v" style="font-size:20px">'+(last?fmtT(last):'-')+'</div><div class="d"><span class="bd '+(online?'ok':'bad')+'">'+(online?'Terhubung':'Terputus')+'</span> &nbsp;Gagal: <b class="'+(fail?'red':'grn')+'">'+fail+'</b></div></div></div></div>';
  const cResp='<div class="card"><div class="ch"><h3>Waktu Respons Chatbot</h3>'+periodSel()+'</div>'+leg([['Rata-rata waktu respons','#e5484d'],['Target ≤ '+tT+' detik','#2a6fdb']])+
   lineChart({labels,min:0,max:5,ticks:[0,1,2,3,4,5],fmt:(v,x)=>dec(v,x?1:0)+' dtk',target:tT,series:[{name:'Waktu respons',color:'#e5484d',vals:txt}]})+

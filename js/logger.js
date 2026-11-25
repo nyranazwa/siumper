@@ -10,17 +10,20 @@
  function rec(type,ok,ket,ms){logged=true;const a=rd(K_LOG,[]);
   a.push({t:new Date().toISOString(),type,ok:!!ok,ms:ms||Math.round(performance.now()-t0)+350,ket}); // +350 = jeda animasi balasan bot
   wr(K_LOG,a.slice(-1000))}
+ window.siumperRec=rec;
  const wrap=(name,fn)=>{const o=window[name];if(typeof o!=='function')return;window[name]=function(){return fn(o,arguments)}};
 
- wrap('cekItemCore',(o,a)=>{const k=a[0],q=a[1],d=a[2];const free=freeR(k,d);
+ wrap('cekItemCore',(o,a)=>{const k=a[0],q=a[1],d=a[2];if(isPast(d)){rec('barang',false,'Tanggal sudah lewat');return o.apply(null,a)}const free=freeR(k,d);
   rec('barang',true,STOCK[k].n+(free>=q?' tersedia ('+free+' unit)':' tidak tersedia'));return o.apply(null,a)});
- wrap('cekRoomCore',(o,a)=>{const r=a[0],d=a[1];const ok=!dys(d).some(i=>!roomWin(r,i));
+ wrap('cekRoomCore',(o,a)=>{const r=a[0],d=a[1];if(isPast(d)){rec('ruangan',false,'Tanggal sudah lewat');return o.apply(null,a)}const ok=!dys(d).some(i=>!roomWin(r,i));
   rec('ruangan',true,r.r+(ok?' tersedia':' tidak tersedia'));return o.apply(null,a)});
  wrap('doCekItem',(o,a)=>{logged=false;const r=o.apply(null,a);if(!logged)rec('barang',false,'Barang atau tanggal tidak terbaca');return r});
  wrap('doCekRoom',(o,a)=>{logged=false;const r=o.apply(null,a);if(!logged)rec('ruangan',false,'Ruangan atau tanggal tidak terbaca');return r});
  // reservasi: log saat diverifikasi, dan simpan booking yang disetujui supaya dashboard dan bot sama-sama melihatnya
  wrap('verify',(o,a)=>{const x=S.res,ok=x&&(S.kind==='room'?dys(x.date).every(i=>roomWin(x.room,i)):freeR(x.item,x.date)>=x.qty);
   rec('lainnya',!!ok,ok?'Reservasi '+(S.kind==='room'?'ruangan ':'barang ')+'dikirim':'Reservasi ditolak: tidak tersedia');return o.apply(null,a)});
+ wrap('cancelRes',(o,a)=>{rec('lainnya',true,'Reservasi dibatalkan oleh pengguna');return o.apply(null,a)});
+ wrap('statusCmd',(o,a)=>{rec('lainnya',true,'Status pengajuan dan pengembalian ditampilkan');return o.apply(null,a)});
  wrap('start',(o,a)=>{rec('lainnya',true,'Menu utama ditampilkan',350);return o.apply(null,a)});
  // saat data dimuat, gabungkan booking yang tersimpan dari sesi sebelumnya
  wrap('loadData',(o,a)=>{return o.apply(null,a).then(()=>{const b=rd(K_BOOK,null);if(Array.isArray(b))BOOK=b;STOCK0=JSON.parse(JSON.stringify(STOCK));HOME0=JSON.parse(JSON.stringify(HOME));const db=rd('siumper-dbr',null);if(db&&db.rooms&&db.items){ROOMS=dbrToRooms(db);ITEMS=dbrToItems(db);setBuildings()}applyStock(db||null)})});
