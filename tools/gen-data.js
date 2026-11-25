@@ -45,6 +45,9 @@ const mkRes=(kind,off,status,item)=>{const dt=iso(off),created=new Date(Date.UTC
   bookings.push(kind==='room'?{kind:'room',key,date:dt,res:r.id}:{kind:'item',key,qty:r.qty,date:dt,res:r.id})}};
 [[-6,'Disetujui'],[-5,'Disetujui'],[-4,'Disetujui'],[-3,'Ditolak'],[-2,'Disetujui'],[-1,'Disetujui'],[0,'Diproses'],[1,'Diproses'],[1,'Disetujui'],[2,'Diproses'],[3,'Disetujui'],[4,'Diproses'],[5,'Diproses'],[6,'Disetujui'],[7,'Diproses'],[9,'Ditolak'],[10,'Diproses'],[12,'Disetujui']].forEach(([o,s])=>mkRes('room',o,s));
 [[-4,'Disetujui','proyektor'],[-1,'Disetujui','laptop'],[0,'Diproses','speaker'],[2,'Diproses','mic kabel'],[3,'Disetujui','pointer'],[5,'Diproses','kabel roll'],[8,'Ditolak','layar']].forEach(([o,s,k])=>mkRes('item',o,s,k));
+// status pengembalian barang: yang sudah lewat tanggalnya dianggap sudah kembali, kecuali satu contoh (laptop) dibiarkan terlambat
+resv.forEach(r=>{if(r.kind==='item'&&r.status==='Disetujui'&&r.dates[0]<iso(-1)&&r.item!=='laptop')r.returned=r.dates[r.dates.length-1]+'T09:30:00.000Z';
+ if(r.status==='Ditolak'){r.alasan=r.kind==='item'?'Dokumen salah / tidak lengkap':'Keputusan mendadak dari kampus';r.alasanDetail=''}});
 resv.sort((x,y)=>y.created.localeCompare(x.created));
 // ---- seed log 28 hari
 const T={barang:.45,ruangan:.30,aset:.15},failRate={barang:.03,ruangan:.03,aset:.09,lainnya:.05};

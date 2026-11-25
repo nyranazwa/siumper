@@ -62,6 +62,15 @@ let RES0=[];
 const _ls=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const resRead=()=>_ls('siumper-res')||RES0;
 const resWrite=l=>{try{localStorage.setItem('siumper-res',JSON.stringify(l))}catch(e){}};
+// Reservasi milik chat ini (setara chat id Telegram). Hanya lokal, tidak disinkronkan ke cloud.
+const mineRead=()=>_ls('siumper-mine')||[];
+const mineAdd=id=>{try{localStorage.setItem('siumper-mine',JSON.stringify(mineRead().concat(id)))}catch(e){}};
+const isoNow=(o=0)=>{const d=new Date();d.setDate(d.getDate()+o);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const lastD=r=>r.dates[r.dates.length-1];
+const lateDays=r=>Math.max(0,Math.round((new Date(isoNow()+'T00:00:00')-new Date(lastD(r)+'T00:00:00'))/864e5));
+// status pengembalian barang: hanya untuk peminjaman barang yang disetujui
+const loanOf=r=>{if(r.kind!=='item'||r.status!=='Disetujui')return '';if(r.returned)return 'Dikembalikan';const t=isoNow();return t>lastD(r)?'Terlambat':t>=r.dates[0]?'Dipinjam':'Dijadwalkan'};
+const alasanTxt=r=>r.alasan?(r.alasan==='Lainnya'&&r.alasanDetail?r.alasanDetail:r.alasan+(r.alasanDetail?' - '+r.alasanDetail:'')):'';
 // Blokir manual oleh admin UMPER (dibuat di dashboard): {kind:'room'|'item',key,from,to,note}. to kosong = tanpa batas akhir.
 const blockRead=()=>_ls('siumper-block')||[];
 const isBlk=(kind,key,iso)=>blockRead().some(b=>b.kind===kind&&b.key===key&&(!b.from||iso>=b.from)&&(!b.to||iso<=b.to));
